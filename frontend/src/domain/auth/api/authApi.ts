@@ -1,5 +1,5 @@
 import api from "@/global/api/axiosInstance.ts";
-import type { AuthResponse, UserResponse, UpdateProfileRequest } from "../types.ts";
+import type { AuthResponse, UserResponse } from "../types.ts";
 
 export const authApi = {
   login(code: string, deviceId: string) {
@@ -25,8 +25,10 @@ export const authApi = {
     return api.get<UserResponse>("/users/me");
   },
 
-  updateProfile(data: UpdateProfileRequest) {
-    return api.patch<UserResponse>("/users/me", data);
+  updateProfile(formData: FormData) {
+    return api.patch<UserResponse>("/users/me", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
   },
 
   deleteAccount() {
