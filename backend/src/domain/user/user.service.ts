@@ -1,7 +1,8 @@
 import prisma from "@/prisma";
 import { AppError } from "@/util/appError";
+import { uploadImage, deleteFile } from "@/service/s3.service";
 import { UserErrorCode } from "./user.error";
-import { toUserResponse, type UserResponse } from "./user.types";
+import { toUserResponse, getDefaultProfileImageUrl, type UserResponse } from "./user.types";
 
 export async function getMe(userId: number): Promise<UserResponse> {
   const user = await prisma.user.findFirst({
@@ -15,7 +16,11 @@ export async function getMe(userId: number): Promise<UserResponse> {
 
 export async function updateMe(
   userId: number,
-  data: { nickname?: string; profileImageUrl?: string | null },
+  data: {
+    nickname?: string;
+    file?: Express.Multer.File;
+    removeProfileImage?: boolean;
+  },
 ): Promise<UserResponse> {
   const user = await prisma.user.findFirst({
     where: { id: userId, deletedAt: null },
@@ -34,13 +39,41 @@ export async function updateMe(
     }
   }
 
+  // 프로필 이미지 처리
+  let profileImageUrl: string | null | undefined;
+  const defaultUrl = getDefaultProfileImageUrl();
+  const isDefaultImage = user.profileImageUrl === null || user.profileImageUrl === defaultUrl;
+
+  if (data.file) {
+    // 새 이미지 업로드
+    profileImageUrl = await uploadImage(data.file, "profiles");
+    // 기존 커스텀 이미지 삭제
+    if (!isDefaultImage && user.profileImageUrl) {
+      await deleteFile(user.profileImageUrl);
+    }
+  } else if (data.removeProfileImage) {
+    // 이미지 제거 → null (응답 시 default.png URL로 변환)
+    profileImageUrl = null;
+    if (!isDefaultImage && user.profileImageUrl) {
+      await deleteFile(user.profileImageUrl);
+    }
+  }
+
+  // 업데이트할 데이터 구성
+  const updateData: Record<string, unknown> = {
+    version: { increment: 1 },
+  };
+  if (data.nickname) {
+    updateData.nickname = data.nickname;
+  }
+  if (profileImageUrl !== undefined) {
+    updateData.profileImageUrl = profileImageUrl;
+  }
+
   // 낙관적 잠금
   const updated = await prisma.user.updateMany({
     where: { id: userId, version: user.version, deletedAt: null },
-    data: {
-      ...data,
-      version: { increment: 1 },
-    },
+    data: updateData,
   });
 
   if (updated.count === 0) {
