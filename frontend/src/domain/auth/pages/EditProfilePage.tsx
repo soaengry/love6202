@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { IoArrowBack } from "react-icons/io5";
+import { IoArrowBackOutline, IoCloseOutline } from "react-icons/io5";
 import { toast } from "react-toastify";
 import { useAuthStore } from "../store/useAuthStore.ts";
 import { authApi } from "../api/authApi.ts";
@@ -16,7 +16,7 @@ export function EditProfilePage() {
 
   const [nickname, setNickname] = useState(user?.nickname ?? "");
   const [nicknameStatus, setNicknameStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
-  const [previewUrl, setPreviewUrl] = useState<string | null>(user?.profileImageUrl ?? null);
+  const [previewUrl, setPreviewUrl] = useState<string>(user?.profileImageUrl ?? "");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imageRemoved, setImageRemoved] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
@@ -77,7 +77,10 @@ export function EditProfilePage() {
     if (previewUrl?.startsWith("blob:")) {
       URL.revokeObjectURL(previewUrl);
     }
-    setPreviewUrl(null);
+    // default.png URL로 즉시 전환
+    setPreviewUrl(user?.profileImageUrl?.includes("profiles/default.png")
+      ? user.profileImageUrl
+      : user?.profileImageUrl?.replace(/profiles\/[^/]+$/, "profiles/default.png") ?? "");
     setSelectedFile(null);
     setImageRemoved(true);
     setImageError(null);
@@ -86,7 +89,7 @@ export function EditProfilePage() {
     }
   };
 
-  const isDefaultImage = !previewUrl || previewUrl.includes("profiles/default.png");
+  const isDefaultImage = previewUrl.includes("profiles/default.png");
   const isNicknameEmpty = nickname.trim().length === 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -123,36 +126,36 @@ export function EditProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-bg-secondary">
+    <div className="edit-profile-page min-h-screen bg-bg-secondary">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         className="max-w-lg mx-auto p-6"
       >
         {/* 헤더 */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className="page-header flex items-center gap-3 mb-6">
           <button
             onClick={() => navigate("/me")}
-            className="p-2 hover:bg-bg-primary rounded-full transition-colors cursor-pointer"
+            className="back-button p-2 hover:bg-bg-primary rounded-full transition-colors cursor-pointer"
           >
-            <IoArrowBack className="text-xl text-text-primary" />
+            <IoArrowBackOutline className="text-xl text-text-primary" />
           </button>
-          <h1 className="text-xl font-semibold text-text-primary">프로필 수정</h1>
+          <h1 className="page-title text-xl font-semibold text-text-primary">프로필 수정</h1>
         </div>
 
         {/* 폼 */}
-        <form onSubmit={handleSubmit} className="bg-bg-primary rounded-2xl shadow-sm border border-border p-6">
+        <form onSubmit={handleSubmit} className="profile-form bg-bg-primary rounded-2xl shadow-sm border border-border p-6">
           {/* 프로필 이미지 */}
-          <div className="flex flex-col items-center gap-2 mb-6">
-            <div className="relative w-28 h-28">
+          <div className="profile-image-section flex flex-col items-center gap-2 mb-6">
+            <div className="profile-image-wrapper relative w-28 h-28">
               <img
-                src={previewUrl ?? user?.profileImageUrl}
+                src={previewUrl}
                 alt="프로필"
-                className="w-28 h-28 rounded-full object-cover bg-bg-secondary border-2 border-border"
+                className="profile-image w-28 h-28 rounded-full object-cover bg-bg-secondary border-2 border-border"
               />
 
               {isSubmitting && (
-                <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40">
+                <div className="profile-image-loading absolute inset-0 flex items-center justify-center rounded-full bg-black/40">
                   <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 </div>
               )}
@@ -161,7 +164,7 @@ export function EditProfilePage() {
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="absolute bottom-0 left-0 right-0 h-[20%] flex items-center justify-center rounded-b-full bg-black/50 text-white text-xs font-medium cursor-pointer"
+                  className="profile-image-change absolute bottom-0 left-0 right-0 h-[20%] flex items-center justify-center rounded-b-full bg-black/50 text-white text-xs font-medium cursor-pointer"
                 >
                   변경
                 </button>
@@ -171,9 +174,9 @@ export function EditProfilePage() {
                 <button
                   type="button"
                   onClick={handleRemoveImage}
-                  className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-text-secondary text-white flex items-center justify-center text-sm leading-none hover:bg-text-primary transition-colors shadow"
+                  className="profile-image-remove absolute -top-1 -right-1 w-6 h-6 rounded-full bg-text-secondary text-white flex items-center justify-center hover:bg-text-primary transition-colors shadow cursor-pointer"
                 >
-                  &minus;
+                  <IoCloseOutline size={16} />
                 </button>
               )}
             </div>
@@ -186,13 +189,13 @@ export function EditProfilePage() {
               className="hidden"
             />
 
-            <p className="text-xs text-text-secondary">JPG, PNG / 최대 2MB</p>
-            {imageError && <p className="text-xs text-red-500">{imageError}</p>}
+            <p className="profile-image-hint text-xs text-text-secondary">JPG, PNG / 최대 2MB</p>
+            {imageError && <p className="profile-image-error text-xs text-red-500">{imageError}</p>}
           </div>
 
           {/* 닉네임 */}
-          <div className="mb-6">
-            <label htmlFor="nickname" className="block text-sm font-medium text-text-primary mb-2">
+          <div className="nickname-section mb-6">
+            <label htmlFor="nickname" className="nickname-label block text-sm font-medium text-text-primary mb-2">
               닉네임
             </label>
             <input
@@ -201,36 +204,36 @@ export function EditProfilePage() {
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
               onBlur={(e) => checkNickname(e.target.value)}
-              className="w-full px-4 py-3 border border-border rounded-xl bg-bg-primary text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+              className="nickname-input w-full px-4 py-3 border border-border rounded-xl bg-bg-primary text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
               placeholder="닉네임을 입력하세요 (2~50자)"
             />
             {isNicknameEmpty && (
-              <p className="mt-1 text-sm text-red-500">닉네임을 입력해주세요.</p>
+              <p className="nickname-error mt-1 text-sm text-red-500">닉네임을 입력해주세요.</p>
             )}
             {nicknameStatus === "checking" && (
-              <p className="mt-1 text-sm text-text-secondary">확인 중...</p>
+              <p className="nickname-status mt-1 text-sm text-text-secondary">확인 중...</p>
             )}
             {nicknameStatus === "available" && (
-              <p className="mt-1 text-sm text-primary">사용 가능한 닉네임입니다.</p>
+              <p className="nickname-status mt-1 text-sm text-primary">사용 가능한 닉네임입니다.</p>
             )}
             {nicknameStatus === "taken" && (
-              <p className="mt-1 text-sm text-red-500">이미 사용 중인 닉네임입니다.</p>
+              <p className="nickname-status mt-1 text-sm text-red-500">이미 사용 중인 닉네임입니다.</p>
             )}
           </div>
 
           {/* 버튼 */}
-          <div className="flex gap-3">
+          <div className="button-group flex gap-3">
             <button
               type="submit"
               disabled={isSubmitting || nicknameStatus === "taken" || isNicknameEmpty}
-              className="flex-1 py-3 bg-primary text-white font-medium rounded-xl hover:bg-primary-dark transition-colors disabled:opacity-50 cursor-pointer"
+              className="submit-button flex-1 py-3 bg-primary text-white font-medium rounded-xl hover:bg-primary-dark transition-colors disabled:opacity-50 cursor-pointer"
             >
               {isSubmitting ? "수정 중..." : "수정 완료"}
             </button>
             <button
               type="button"
               onClick={() => navigate("/me")}
-              className="flex-1 py-3 border border-border text-text-secondary font-medium rounded-xl hover:bg-bg-secondary transition-colors cursor-pointer"
+              className="cancel-button flex-1 py-3 border border-border text-text-secondary font-medium rounded-xl hover:bg-bg-secondary transition-colors cursor-pointer"
             >
               취소
             </button>

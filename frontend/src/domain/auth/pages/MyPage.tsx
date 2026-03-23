@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { IoCreateOutline, IoLogOutOutline, IoTrashOutline } from "react-icons/io5";
+import { IoArrowBackOutline, IoCreateOutline, IoLogOutOutline, IoTrashOutline } from "react-icons/io5";
 import { toast } from "react-toastify";
 import { useAuthStore } from "../store/useAuthStore.ts";
 import { authApi } from "../api/authApi.ts";
@@ -40,30 +40,41 @@ export function MyPage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-bg-secondary">
+    <div className="my-page min-h-screen bg-bg-secondary">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         className="max-w-lg mx-auto p-6"
       >
+        {/* 헤더 */}
+        <div className="page-header flex items-center gap-3 mb-6">
+          <button
+            onClick={() => navigate(-1)}
+            className="back-button p-2 hover:bg-bg-primary rounded-full transition-colors cursor-pointer"
+          >
+            <IoArrowBackOutline className="text-xl text-text-primary" />
+          </button>
+          <h1 className="page-title text-xl font-semibold text-text-primary">마이페이지</h1>
+        </div>
+
         {/* 프로필 카드 */}
-        <div className="bg-bg-primary rounded-2xl shadow-sm border border-border p-5 mb-4 relative">
+        <div className="profile-section bg-bg-primary rounded-2xl shadow-sm border border-border p-5 mb-4 relative">
           <button
             onClick={() => navigate("/me/edit")}
-            className="absolute top-4 right-4 p-1.5 text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+            className="profile-edit-button absolute top-4 right-4 p-1.5 text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
           >
             <IoCreateOutline size={20} />
           </button>
-          <div className="flex items-center gap-4">
+          <div className="profile-info flex items-center gap-4">
             <img
               src={user.profileImageUrl}
               alt="프로필"
-              className="w-16 h-16 rounded-full object-cover bg-bg-secondary border border-border"
+              className="profile-avatar w-16 h-16 rounded-full object-cover bg-bg-secondary border border-border"
             />
-            <div>
-              <h2 className="text-lg font-semibold text-text-primary">{user.nickname}</h2>
-              <p className="text-sm text-text-secondary">{user.email}</p>
-              <span className="mt-1 inline-block text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+            <div className="profile-details">
+              <h2 className="profile-nickname text-lg font-semibold text-text-primary">{user.nickname}</h2>
+              <p className="profile-email text-sm text-text-secondary">{user.email}</p>
+              <span className="profile-role mt-1 inline-block text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
                 {user.role}
               </span>
             </div>
@@ -71,10 +82,10 @@ export function MyPage() {
         </div>
 
         {/* 메뉴 */}
-        <div className="bg-bg-primary rounded-2xl shadow-sm border border-border divide-y divide-border">
+        <div className="menu-section bg-bg-primary rounded-2xl shadow-sm border border-border divide-y divide-border">
           <button
             onClick={() => navigate("/me/edit")}
-            className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-bg-secondary transition-colors cursor-pointer"
+            className="menu-item menu-edit w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-bg-secondary transition-colors cursor-pointer"
           >
             <IoCreateOutline className="text-xl text-text-secondary" />
             <span className="text-text-primary">프로필 수정</span>
@@ -82,7 +93,7 @@ export function MyPage() {
 
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-bg-secondary transition-colors cursor-pointer"
+            className="menu-item menu-logout w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-bg-secondary transition-colors cursor-pointer"
           >
             <IoLogOutOutline className="text-xl text-text-secondary" />
             <span className="text-text-primary">로그아웃</span>
@@ -91,7 +102,7 @@ export function MyPage() {
           <button
             onClick={handleDelete}
             disabled={isDeleting}
-            className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-red-50 transition-colors cursor-pointer disabled:opacity-50"
+            className="menu-item menu-delete w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-red-50 transition-colors cursor-pointer disabled:opacity-50"
           >
             <IoTrashOutline className="text-xl text-red-500" />
             <span className="text-red-500">{isDeleting ? "처리 중..." : "회원 탈퇴"}</span>
