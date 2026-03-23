@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { IoPersonCircleOutline, IoCreateOutline, IoLogOutOutline, IoTrashOutline } from "react-icons/io5";
+import { IoCreateOutline, IoLogOutOutline, IoTrashOutline } from "react-icons/io5";
 import { toast } from "react-toastify";
 import { useAuthStore } from "../store/useAuthStore.ts";
 import { authApi } from "../api/authApi.ts";
@@ -46,18 +46,20 @@ export function MyPage() {
         animate={{ opacity: 1 }}
         className="max-w-lg mx-auto p-6"
       >
-        {/* 프로필 섹션 */}
-        <div className="bg-bg-primary rounded-2xl shadow-sm p-6 mb-4">
+        {/* 프로필 카드 */}
+        <div className="bg-bg-primary rounded-2xl shadow-sm border border-border p-5 mb-4 relative">
+          <button
+            onClick={() => navigate("/me/edit")}
+            className="absolute top-4 right-4 p-1.5 text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+          >
+            <IoCreateOutline size={20} />
+          </button>
           <div className="flex items-center gap-4">
-            {user.profileImageUrl ? (
-              <img
-                src={user.profileImageUrl}
-                alt="프로필"
-                className="w-16 h-16 rounded-full object-cover"
-              />
-            ) : (
-              <IoPersonCircleOutline className="w-16 h-16 text-text-secondary" />
-            )}
+            <img
+              src={user.profileImageUrl}
+              alt="프로필"
+              className="w-16 h-16 rounded-full object-cover bg-bg-secondary border border-border"
+            />
             <div>
               <h2 className="text-lg font-semibold text-text-primary">{user.nickname}</h2>
               <p className="text-sm text-text-secondary">{user.email}</p>
@@ -69,7 +71,7 @@ export function MyPage() {
         </div>
 
         {/* 메뉴 */}
-        <div className="bg-bg-primary rounded-2xl shadow-sm divide-y divide-border">
+        <div className="bg-bg-primary rounded-2xl shadow-sm border border-border divide-y divide-border">
           <button
             onClick={() => navigate("/me/edit")}
             className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-bg-secondary transition-colors cursor-pointer"

@@ -7,4 +7,6 @@ export const UserErrorCode = {
   AUTH_INVALID_REFRESH_TOKEN:  { code: "AUTH_INVALID_REFRESH_TOKEN",  status: 401, message: "유효하지 않은 리프레시 토큰입니다." },
   AUTH_TOKEN_REVOKED:          { code: "AUTH_TOKEN_REVOKED",          status: 401, message: "토큰이 무효화되었습니다." },
   AUTH_GOOGLE_FAILED:          { code: "AUTH_GOOGLE_FAILED",          status: 401, message: "Google 인증에 실패했습니다." },
+  INVALID_FILE_TYPE:           { code: "INVALID_FILE_TYPE",           status: 400, message: "JPG, PNG 파일만 업로드 가능합니다." },
+  FILE_SIZE_EXCEEDED:          { code: "FILE_SIZE_EXCEEDED",          status: 400, message: "파일 크기는 2MB 이하여야 합니다." },
 } as const;

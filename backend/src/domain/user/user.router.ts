@@ -1,8 +1,7 @@
 import { Router, Request, Response, NextFunction } from "express";
-import { validate } from "@/middleware/validate";
 import { authenticate } from "@/middleware/auth";
+import { uploadProfileImage } from "@/middleware/upload";
 import { apiResponse } from "@/util/apiResponse";
-import { updateProfileSchema } from "./user.schema";
 import * as userService from "./user.service";
 
 const router = Router();
@@ -20,10 +19,15 @@ router.get("/me", async (req: Request, res: Response, next: NextFunction) => {
 
 router.patch(
   "/me",
-  validate({ body: updateProfileSchema }),
+  uploadProfileImage,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const user = await userService.updateMe(req.userId!, req.body);
+      const { nickname, removeProfileImage } = req.body;
+      const user = await userService.updateMe(req.userId!, {
+        nickname,
+        file: req.file,
+        removeProfileImage: removeProfileImage === "true",
+      });
       res.json(apiResponse.ok("프로필 수정 성공", user));
     } catch (err) {
       next(err);
