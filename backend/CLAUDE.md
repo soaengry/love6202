@@ -107,18 +107,18 @@ src/
 
 ### 인증
 
-- JWT 토큰은 `Authorization: Bearer {token}` 헤더로 전달
-- `authenticate` 미들웨어 → `req.userId`, `req.userRole` 주입
+- JWT 토큰은 httpOnly 쿠키(`access_token`, `refresh_token`)로 전달
+- `authenticate` 미들웨어 → `req.cookies.access_token`에서 토큰 읽기 → `req.userId`, `req.userRole` 주입
 - `requireAdmin` — ADMIN 권한 필수
 - `optionalAuth` — 비로그인 허용 (방명록 등)
 - 호스트 권한: user의 role이 HOST인 경우
 - JWT implementation checklist:
-  [ ] Refresh tokens stored securely (httpOnly cookie)
-  [ ] Refresh tokens rotated on every use
-  [ ] Token blacklist in place for logout
-  [ ] Sensitive data NOT stored in payload
+  [x] Refresh tokens stored securely (httpOnly cookie)
+  [x] Refresh tokens rotated on every use
+  [x] Token blacklist in place for logout (Redis)
+  [x] Sensitive data NOT stored in payload
   [ ] Algorithm explicitly set (avoid "none")
-  [ ] Tokens validated on every request
+  [x] Tokens validated on every request
 
 ### 유효성 검증
 

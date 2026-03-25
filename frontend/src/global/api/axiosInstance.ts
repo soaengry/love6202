@@ -1,41 +1,27 @@
 import axios from "axios";
 import type { AxiosRequestConfig } from "axios";
 import { ENV } from "@/global/config/env.ts";
-import {
-  getAccessToken,
-  getRefreshToken,
-  setTokens,
-  clearTokens,
-  getDeviceId,
-} from "@/domain/auth/auth.utils.ts";
+import { getDeviceId } from "@/domain/auth/auth.utils.ts";
 import type { ApiResponse } from "@/global/types/index.ts";
 
 const api = axios.create({
   baseURL: ENV.API_BASE_URL + "/api",
   timeout: 10_000,
   headers: { "Content-Type": "application/json" },
-});
-
-// Request: Bearer token 주입
-api.interceptors.request.use((config) => {
-  const token = getAccessToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
+  withCredentials: true,
 });
 
 // Response: data 추출 + 401 refresh
 let isRefreshing = false;
 let refreshQueue: Array<{
-  resolve: (token: string) => void;
+  resolve: () => void;
   reject: (err: unknown) => void;
 }> = [];
 
-function processQueue(error: unknown, token: string | null) {
+function processQueue(error: unknown) {
   refreshQueue.forEach(({ resolve, reject }) => {
     if (error) reject(error);
-    else resolve(token!);
+    else resolve();
   });
   refreshQueue = [];
 }
@@ -63,11 +49,7 @@ api.interceptors.response.use(
     if (isRefreshing) {
       return new Promise((resolve, reject) => {
         refreshQueue.push({
-          resolve: (token: string) => {
-            originalRequest.headers = {
-              ...originalRequest.headers,
-              Authorization: `Bearer ${token}`,
-            };
+          resolve: () => {
             originalRequest._retry = true;
             resolve(api(originalRequest));
           },
@@ -80,28 +62,15 @@ api.interceptors.response.use(
     originalRequest._retry = true;
 
     try {
-      const refreshToken = getRefreshToken();
-      if (!refreshToken) throw new Error("No refresh token");
-
-      const { data } = await axios.post<
-        ApiResponse<{ accessToken: string; refreshToken: string }>
-      >(`${ENV.API_BASE_URL}/auth/refresh`, {
-        refreshToken,
-        deviceId: getDeviceId(),
-      });
-
-      const tokens = data.data;
-      setTokens(tokens.accessToken, tokens.refreshToken);
-      processQueue(null, tokens.accessToken);
-
-      originalRequest.headers = {
-        ...originalRequest.headers,
-        Authorization: `Bearer ${tokens.accessToken}`,
-      };
+      await axios.post(
+        `${ENV.API_BASE_URL}/api/auth/refresh`,
+        { deviceId: getDeviceId() },
+        { withCredentials: true },
+      );
+      processQueue(null);
       return api(originalRequest);
     } catch (refreshError) {
-      processQueue(refreshError, null);
-      clearTokens();
+      processQueue(refreshError);
       window.location.href = "/login";
       return Promise.reject(refreshError);
     } finally {

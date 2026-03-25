@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from "express";
 import { validate } from "@/middleware/validate";
 import { authenticate } from "@/middleware/auth";
 import { apiResponse } from "@/util/apiResponse";
+import { setAuthCookies, clearAuthCookies, COOKIE_NAMES } from "@/util/cookie";
 import { loginSchema, refreshSchema, checkNicknameSchema } from "./user.schema";
 import * as authService from "./auth.service";
 
@@ -14,7 +15,8 @@ router.post(
     try {
       const { code, deviceId } = req.body;
       const result = await authService.googleLogin(code, deviceId);
-      res.json(apiResponse.ok("로그인 성공", result));
+      setAuthCookies(res, result.accessToken, result.refreshToken);
+      res.json(apiResponse.ok("로그인 성공", { user: result.user }));
     } catch (err) {
       next(err);
     }
@@ -26,9 +28,14 @@ router.post(
   validate({ body: refreshSchema }),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { refreshToken, deviceId } = req.body;
+      const refreshToken = req.cookies?.[COOKIE_NAMES.REFRESH_TOKEN];
+      if (!refreshToken) {
+        return res.status(401).json(apiResponse.error(401, "NO_REFRESH_TOKEN"));
+      }
+      const { deviceId } = req.body;
       const result = await authService.refresh(refreshToken, deviceId);
-      res.json(apiResponse.ok("토큰 갱신 성공", result));
+      setAuthCookies(res, result.accessToken, result.refreshToken);
+      res.json(apiResponse.ok("토큰 갱신 성공", null));
     } catch (err) {
       next(err);
     }
@@ -42,6 +49,7 @@ router.post(
     try {
       const { deviceId } = req.body;
       await authService.logout(req.userId!, deviceId);
+      clearAuthCookies(res);
       res.json(apiResponse.ok("로그아웃 성공", null));
     } catch (err) {
       next(err);

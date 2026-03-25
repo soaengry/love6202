@@ -1,17 +1,16 @@
 import { Request, Response, NextFunction } from "express";
 import { verifyToken } from "@/util/jwt";
 import { apiResponse } from "@/util/apiResponse";
+import { COOKIE_NAMES } from "@/util/cookie";
 
 export function authenticate(req: Request, res: Response, next: NextFunction) {
-  const header = req.headers.authorization;
-  if (!header?.startsWith("Bearer ")) {
+  const token = req.cookies?.[COOKIE_NAMES.ACCESS_TOKEN];
+  if (!token) {
     return res.status(401).json(apiResponse.error(401, "UNAUTHORIZED"));
   }
 
   try {
-    const token = header.slice(7);
     const payload = verifyToken(token);
-
     req.userId = payload.userId;
     req.userRole = payload.role;
     next();
@@ -29,10 +28,10 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction) {
 
 // 인증 선택적
 export function optionalAuth(req: Request, res: Response, next: NextFunction) {
-  const header = req.headers.authorization;
-  if (header?.startsWith("Bearer ")) {
+  const token = req.cookies?.[COOKIE_NAMES.ACCESS_TOKEN];
+  if (token) {
     try {
-      const payload = verifyToken(header.slice(7));
+      const payload = verifyToken(token);
       req.userId = payload.userId;
       req.userRole = payload.role;
     } catch {

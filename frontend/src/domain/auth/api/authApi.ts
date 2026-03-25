@@ -7,14 +7,8 @@ export const authApi = {
     return api.post<AuthResponse>(AUTH_API.LOGIN, { code, deviceId });
   },
 
-  refresh(refreshToken: string, deviceId: string) {
-    return api.post<{ accessToken: string; refreshToken: string }>(
-      AUTH_API.REFRESH,
-      {
-        refreshToken,
-        deviceId,
-      },
-    );
+  refresh(deviceId: string) {
+    return api.post(AUTH_API.REFRESH, { deviceId });
   },
 
   logout(deviceId: string) {

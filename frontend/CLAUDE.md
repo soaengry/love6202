@@ -126,10 +126,11 @@ domain/[feature]/
 
 ## 인증 흐름
 
-1. `App.tsx` 마운트 시 localStorage에서 토큰 복원 시도
-2. 토큰 유효하면 `getMe()` 호출 → Zustand 스토어에 사용자 설정
-3. 만료/실패 시 로그아웃 처리
-4. 토큰 저장: `love6202_access_token`, `love6202_refresh_token`, `love6202_device_id`
+1. `App.tsx` 마운트 시 `getMe()` 호출 → 쿠키 유효하면 Zustand 스토어에 사용자 설정
+2. 401 발생 시 `POST /auth/refresh` 자동 호출 (브라우저가 refresh 쿠키 전송)
+3. 리프레시 실패 시 로그아웃 → `/login` 리다이렉트
+4. 토큰: httpOnly 쿠키 (`access_token`, `refresh_token`) — JS 접근 불가
+5. Device ID만 localStorage에 저장 (`love_device_id`)
 
 ## Environment Variables
 

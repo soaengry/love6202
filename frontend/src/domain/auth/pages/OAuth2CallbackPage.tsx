@@ -25,10 +25,7 @@ export const OAuth2CallbackPage: FC = () => {
     const handleCallback = async () => {
       try {
         const { data } = await authApi.login(code, getDeviceId());
-        setAuth(
-          { accessToken: data.accessToken, refreshToken: data.refreshToken },
-          data.user,
-        );
+        setAuth(data.user);
         navigate("/", { replace: true });
       } catch {
         toast.error("로그인에 실패했습니다. 다시 시도해주세요.");
