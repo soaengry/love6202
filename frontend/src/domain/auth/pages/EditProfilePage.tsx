@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type FC } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { IoArrowBackOutline, IoCloseOutline } from "react-icons/io5";
@@ -9,7 +9,7 @@ import { authApi } from "../api/authApi.ts";
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png"];
 
-export function EditProfilePage() {
+export const EditProfilePage: FC = () => {
   const { user, setUser } = useAuthStore();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -242,4 +242,4 @@ export function EditProfilePage() {
       </motion.div>
     </div>
   );
-}
+};

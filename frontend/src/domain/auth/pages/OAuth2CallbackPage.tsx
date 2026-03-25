@@ -1,11 +1,11 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type FC } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { authApi } from "../api/authApi.ts";
 import { useAuthStore } from "../store/useAuthStore.ts";
 import { getDeviceId } from "../auth.utils.ts";
 
-export function OAuth2CallbackPage() {
+export const OAuth2CallbackPage: FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const setAuth = useAuthStore((s) => s.setAuth);
@@ -47,4 +47,4 @@ export function OAuth2CallbackPage() {
       </div>
     </div>
   );
-}
+};

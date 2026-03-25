@@ -1,16 +1,46 @@
-import { useState } from "react";
+import { useState, useEffect, type FC } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { IoArrowBackOutline, IoCreateOutline, IoLogOutOutline, IoTrashOutline } from "react-icons/io5";
+import { IoArrowBackOutline, IoCreateOutline, IoLogOutOutline, IoTrashOutline, IoAddCircleOutline } from "react-icons/io5";
 import { toast } from "react-toastify";
 import { useAuthStore } from "../store/useAuthStore.ts";
 import { authApi } from "../api/authApi.ts";
 import { getDeviceId } from "../auth.utils.ts";
+import { weddingApi } from "@/domain/wedding/api/weddingApi.ts";
 
-export function MyPage() {
+export const MyPage: FC = () => {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeletingWedding, setIsDeletingWedding] = useState(false);
+  const [hasWedding, setHasWedding] = useState<boolean | null>(null);
+  const [weddingId, setWeddingId] = useState<number | null>(null);
+
+  useEffect(() => {
+    weddingApi.getMyWedding()
+      .then((res) => {
+        setHasWedding(true);
+        setWeddingId(res.data.wedding.id);
+      })
+      .catch(() => setHasWedding(false));
+  }, []);
+
+  const handleDeleteWedding = async () => {
+    if (!weddingId) return;
+    if (!window.confirm("정말 초대장을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) return;
+
+    setIsDeletingWedding(true);
+    try {
+      await weddingApi.deleteWedding(weddingId);
+      setHasWedding(false);
+      setWeddingId(null);
+      toast.success("초대장이 삭제되었습니다.");
+    } catch {
+      toast.error("초대장 삭제에 실패했습니다.");
+    } finally {
+      setIsDeletingWedding(false);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -90,6 +120,34 @@ export function MyPage() {
             <IoCreateOutline className="text-xl text-text-secondary" />
             <span className="text-text-primary">프로필 수정</span>
           </button>
+
+          {hasWedding === null ? null : hasWedding ? (
+            <>
+              <button
+                onClick={() => navigate("/edit")}
+                className="menu-item menu-edit-wedding w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-bg-secondary transition-colors cursor-pointer"
+              >
+                <IoCreateOutline className="text-xl text-primary" />
+                <span className="text-text-primary">청첩장 수정하기</span>
+              </button>
+              <button
+                onClick={handleDeleteWedding}
+                disabled={isDeletingWedding}
+                className="menu-item menu-delete-wedding w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-red-50 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                <IoTrashOutline className="text-xl text-red-500" />
+                <span className="text-red-500">{isDeletingWedding ? "삭제 중..." : "초대장 삭제"}</span>
+              </button>
+            </>
+          ) : user.role === "ADMIN" && (
+            <button
+              onClick={() => navigate("/create")}
+              className="menu-item menu-create-wedding w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-bg-secondary transition-colors cursor-pointer"
+            >
+              <IoAddCircleOutline className="text-xl text-primary" />
+              <span className="text-text-primary">청첩장 만들기</span>
+            </button>
+          )}
 
           <button
             onClick={handleLogout}

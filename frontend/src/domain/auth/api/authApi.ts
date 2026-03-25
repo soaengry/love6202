@@ -1,37 +1,43 @@
 import api from "@/global/api/axiosInstance.ts";
 import type { AuthResponse, UserResponse } from "../types.ts";
+import { AUTH_API, USER_API } from "../auth.constants.ts";
 
 export const authApi = {
   login(code: string, deviceId: string) {
-    return api.post<AuthResponse>("/auth/login", { code, deviceId });
+    return api.post<AuthResponse>(AUTH_API.LOGIN, { code, deviceId });
   },
 
   refresh(refreshToken: string, deviceId: string) {
-    return api.post<{ accessToken: string; refreshToken: string }>("/auth/refresh", {
-      refreshToken,
-      deviceId,
-    });
+    return api.post<{ accessToken: string; refreshToken: string }>(
+      AUTH_API.REFRESH,
+      {
+        refreshToken,
+        deviceId,
+      },
+    );
   },
 
   logout(deviceId: string) {
-    return api.post("/auth/logout", { deviceId });
+    return api.post(AUTH_API.LOGOUT, { deviceId });
   },
 
   checkNickname(nickname: string) {
-    return api.post<{ available: boolean }>("/auth/check-nickname", { nickname });
+    return api.post<{ available: boolean }>(AUTH_API.CHECK_NICKNAME, {
+      nickname,
+    });
   },
 
   getMe() {
-    return api.get<UserResponse>("/users/me");
+    return api.get<UserResponse>(USER_API.ME);
   },
 
   updateProfile(formData: FormData) {
-    return api.patch<UserResponse>("/users/me", formData, {
+    return api.patch<UserResponse>(USER_API.ME, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
   },
 
   deleteAccount() {
-    return api.delete("/users/me");
+    return api.delete(USER_API.ME);
   },
 };
