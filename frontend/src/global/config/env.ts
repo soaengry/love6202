@@ -4,4 +4,5 @@ export const ENV = {
   GOOGLE_REDIRECT_URI:
     import.meta.env.VITE_GOOGLE_REDIRECT_URI ||
     `${window.location.origin}/login/oauth2/code/google`,
+  KAKAO_MAP_KEY: import.meta.env.VITE_KAKAO_MAP_KEY || "",
 };

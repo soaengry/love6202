@@ -1,7 +1,8 @@
+import type { FC } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/domain/auth/store/useAuthStore.ts";
 
-export function ProtectedRoute({ children }: { children: React.ReactNode }) {
+export const ProtectedRoute: FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuthStore();
   const location = useLocation();
 
@@ -18,4 +19,4 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   return <>{children}</>;
-}
+};

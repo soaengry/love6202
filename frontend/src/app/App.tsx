@@ -1,10 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, type FC } from "react";
 import { AppRouter } from "./routes/AppRouter.tsx";
 import { useAuthStore } from "@/domain/auth/store/useAuthStore.ts";
 import { authApi } from "@/domain/auth/api/authApi.ts";
 import { getAccessToken, getRefreshToken, isTokenExpired } from "@/domain/auth/auth.utils.ts";
 
-export function App() {
+export const App: FC = () => {
   const { setAuth, logout, setLoading } = useAuthStore();
 
   useEffect(() => {
@@ -35,4 +35,4 @@ export function App() {
   }, [setAuth, logout, setLoading]);
 
   return <AppRouter />;
-}
+};

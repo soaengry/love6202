@@ -108,6 +108,22 @@ domain/[feature]/
 - React Hook Form + Zod 스키마 조합
 - `@hookform/resolvers`로 연결
 
+### 기타 컨벤션
+
+- **컴포넌트**: `const Component: FC<Props> = () => {}` 형식
+- **타입**: `interface`로 정의, `types.ts`에 위치
+- **API 상수**: `{module}.constants.ts`에 `as const` 객체로 정의
+- **에러 처리**: `isAxiosError(err)` + 상태코드별 분기
+- **로딩 상태**: `isSubmitting` / `isSending` 플래그로 버튼 `disabled` 처리
+- **import 정렬**: 외부 라이브러리 → 내부 모듈 순서
+- **DDD 구조**: `domain/{module}/` (api, store, components, pages, types)
+- **상태관리**: Zustand — `useAuthStore` (user, tokens, isAuthenticated)
+- **폼**: React Hook Form + Zod (`zodResolver`)
+- **HTTP**: Axios — `axiosInstance` (인터셉터로 토큰 자동 첨부/갱신)
+- **스타일**: Tailwind CSS 유틸리티 클래스만 사용 (인라인 `style` 속성 금지)
+- **Barrel Export**: 각 모듈의 `index.ts`에서 re-export
+- **UI 텍스트**: 한국어
+
 ## 인증 흐름
 
 1. `App.tsx` 마운트 시 localStorage에서 토큰 복원 시도
