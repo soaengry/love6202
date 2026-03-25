@@ -6,6 +6,8 @@ import { errorHandler } from "@/middleware/errorHandler";
 import { env } from "@/config/env";
 import authRouter from "@/domain/user/auth.router";
 import userRouter from "@/domain/user/user.router";
+import weddingRouter from "@/domain/wedding/wedding.router";
+import bankRouter from "@/domain/bank/bank.router";
 
 const app = express();
 
@@ -22,6 +24,8 @@ app.get("/login/oauth2/code/google", (req, res) => {
 
 app.use("/api/auth", authRouter);
 app.use("/api/users", userRouter);
+app.use("/api/weddings", weddingRouter);
+app.use("/api/banks", bankRouter);
 
 app.use(errorHandler);
 

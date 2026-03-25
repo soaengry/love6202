@@ -20,3 +20,9 @@ const upload = multer({
 });
 
 export const uploadProfileImage = upload.single("profileImage");
+
+export const uploadWeddingImages = upload.fields([
+  { name: "heroImages", maxCount: 4 },
+  { name: "groomProfileImage", maxCount: 1 },
+  { name: "brideProfileImage", maxCount: 1 },
+]);
