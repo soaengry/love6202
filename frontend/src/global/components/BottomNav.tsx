@@ -42,6 +42,7 @@ export const BottomNav: FC<BottomNavProps> = ({ activeTab, onTabChange }) => {
   const location = useLocation();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isMyPage = location.pathname === "/me";
+  const isWeddingPage = location.pathname === "/" || /^\/\d+$/.test(location.pathname);
 
   return (
     <nav className="bottom-nav fixed bottom-0 left-0 right-0 bg-bg-primary border-t border-border z-50">
@@ -53,7 +54,9 @@ export const BottomNav: FC<BottomNavProps> = ({ activeTab, onTabChange }) => {
             <button
               key={tab.id}
               onClick={() => {
-                if (location.pathname !== "/") navigate("/");
+                if (!isWeddingPage) {
+                  navigate(location.pathname.match(/^\/(\d+)$/)?.[0] ?? "/");
+                }
                 onTabChange(tab.id);
               }}
               className={`flex flex-col items-center justify-center gap-0.5 w-full h-full cursor-pointer transition-colors ${

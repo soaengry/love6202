@@ -20,6 +20,7 @@ export const AppRouter: FC = () => {
       {/* Main layout with BottomNav */}
       <Route element={<MainLayout />}>
         <Route path="/" element={<HomePage />} />
+        <Route path="/:weddingId" element={<HomePage />} />
         <Route path="/me" element={<ProtectedRoute><MyPage /></ProtectedRoute>} />
       </Route>
 
