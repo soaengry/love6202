@@ -23,6 +23,20 @@ router.get(
   },
 );
 
+// ─── Protected ──────────────────────────────────────────
+
+router.use(authenticate);
+
+// GET /api/weddings/me — 내 초대장 조회 (/:id 보다 먼저 선언)
+router.get("/me", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await weddingService.getMyWedding(req.userId!);
+    res.json(apiResponse.ok("초대장 조회 성공", result));
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /api/weddings/:id — 초대장 공개 조회
 router.get(
   "/:id",
@@ -37,10 +51,6 @@ router.get(
     }
   },
 );
-
-// ─── Protected ──────────────────────────────────────────
-
-router.use(authenticate);
 
 // POST /api/weddings — 초대장 생성
 router.post(
@@ -95,16 +105,6 @@ router.put(
     }
   },
 );
-
-// GET /api/weddings/me — 내 초대장 조회
-router.get("/me", async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const result = await weddingService.getMyWedding(req.userId!);
-    res.json(apiResponse.ok("초대장 조회 성공", result));
-  } catch (err) {
-    next(err);
-  }
-});
 
 // DELETE /api/weddings/:id — 초대장 삭제 (soft delete)
 router.delete(
