@@ -129,6 +129,10 @@ export const WeddingCreatePage: FC = () => {
   const venueLng = watch("wedding.venueLng");
 
   const handleNext = async () => {
+    if (step === 0 && heroImages.length === 0) {
+      toast.error("대표 이미지를 1장 이상 선택해주세요.");
+      return;
+    }
     const fields = STEP_FIELDS[step] as readonly string[];
     const valid = await trigger(fields as unknown as (keyof WeddingFormData)[]);
     if (valid) setStep((s) => Math.min(s + 1, TOTAL_STEPS - 1));

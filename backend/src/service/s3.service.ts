@@ -15,11 +15,15 @@ const s3 = new S3Client({
   },
 });
 
+function getExtension(mimetype: string): string {
+  return mimetype === "image/png" ? ".png" : ".jpg";
+}
+
 export async function uploadImage(
   file: Express.Multer.File,
   folder = "images",
 ): Promise<string> {
-  const key = `${folder}/${crypto.randomUUID()}-${file.originalname}`;
+  const key = `${folder}/${crypto.randomUUID()}${getExtension(file.mimetype)}`;
   await s3.send(
     new PutObjectCommand({
       Bucket: env.AWS_BUCKET,
@@ -35,8 +39,9 @@ export async function uploadImageWithThumbnail(
   file: Express.Multer.File,
 ): Promise<{ imageUrl: string; thumbnailUrl: string }> {
   const uuid = crypto.randomUUID();
-  const originalKey = `galleries/${uuid}-${file.originalname}`;
-  const thumbKey = `galleries/thumbs/${uuid}-${file.originalname}`;
+  const ext = getExtension(file.mimetype);
+  const originalKey = `galleries/${uuid}${ext}`;
+  const thumbKey = `galleries/thumbs/${uuid}.jpg`;
 
   // 원본 업로드
   await s3.send(

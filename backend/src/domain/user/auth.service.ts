@@ -88,7 +88,7 @@ export async function googleLogin(
 
   const deviceCount = await refreshTokenService.countDevices(user.id);
   if (deviceCount >= MAX_DEVICES) {
-    await refreshTokenService.deleteAllByUser(user.id);
+    await refreshTokenService.evictOldestDevice(user.id);
   }
 
   const accessToken = generateAccessToken(user);

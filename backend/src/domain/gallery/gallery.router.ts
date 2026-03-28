@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { authenticate, requireAdminOrHost } from "@/middleware/auth";
-import { uploadGalleryImages } from "@/middleware/upload";
+import { uploadGalleryImages, validateUploadedFiles } from "@/middleware/upload";
 import { validate } from "@/middleware/validate";
 import { apiResponse } from "@/util/apiResponse";
 import { galleryQuerySchema, galleryDeleteBodySchema } from "./gallery.schema";
@@ -38,6 +38,7 @@ router.post(
   "/",
   requireAdminOrHost,
   uploadGalleryImages,
+  validateUploadedFiles,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const files = req.files as Express.Multer.File[] | undefined;

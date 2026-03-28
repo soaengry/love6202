@@ -413,34 +413,30 @@ async function syncCoupleHosts(
   oldEmails: string[],
   creatorUserId: number,
 ): Promise<void> {
-  // 부여: 새 couple 이메일에 해당하는 유저 → HOST + weddingId 연결
-  for (const email of newEmails) {
-    const user = await tx.user.findFirst({
-      where: { email, deletedAt: null, id: { not: creatorUserId } },
+  // 부여: 새 couple 이메일에 해당하는 유저 → HOST + weddingId 연결 (배치)
+  if (newEmails.length > 0) {
+    const usersToGrant = await tx.user.findMany({
+      where: { email: { in: newEmails }, deletedAt: null, id: { not: creatorUserId }, role: { not: "ADMIN" } },
+      select: { id: true },
     });
-    if (user && user.role !== "ADMIN") {
-      await tx.user.update({
-        where: { id: user.id },
+    if (usersToGrant.length > 0) {
+      await tx.user.updateMany({
+        where: { id: { in: usersToGrant.map((u) => u.id) } },
         data: { weddingId, role: "HOST" },
       });
     }
   }
 
-  // 해제: 제거된 couple 이메일의 유저 → GUEST + weddingId 해제
+  // 해제: 제거된 couple 이메일의 유저 → GUEST + weddingId 해제 (배치)
   const removedEmails = oldEmails.filter((e) => !newEmails.includes(e));
-  for (const email of removedEmails) {
-    const user = await tx.user.findFirst({
-      where: {
-        email,
-        deletedAt: null,
-        weddingId,
-        id: { not: creatorUserId },
-        role: "HOST",
-      },
+  if (removedEmails.length > 0) {
+    const usersToRevoke = await tx.user.findMany({
+      where: { email: { in: removedEmails }, deletedAt: null, weddingId, id: { not: creatorUserId }, role: "HOST" },
+      select: { id: true },
     });
-    if (user) {
-      await tx.user.update({
-        where: { id: user.id },
+    if (usersToRevoke.length > 0) {
+      await tx.user.updateMany({
+        where: { id: { in: usersToRevoke.map((u) => u.id) } },
         data: { weddingId: null, role: "GUEST" },
       });
     }

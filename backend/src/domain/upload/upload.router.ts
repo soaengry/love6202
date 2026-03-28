@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { optionalAuth } from "@/middleware/auth";
-import { uploadUserImages } from "@/middleware/upload";
+import { uploadUserImages, validateUploadedFiles } from "@/middleware/upload";
 import { validate } from "@/middleware/validate";
 import { apiResponse } from "@/util/apiResponse";
 import { AppError } from "@/util/appError";
@@ -16,7 +16,7 @@ router.get(
   "/image/:driveFileId",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { driveFileId } = req.params;
+      const { driveFileId } = req.params as Record<string, string>;
       const { data, mimeType } = await streamFromDrive(driveFileId);
 
       res.setHeader("Content-Type", mimeType);
@@ -55,6 +55,7 @@ router.get(
 router.post(
   "/",
   uploadUserImages,
+  validateUploadedFiles,
   validate({ query: uploadQuerySchema }),
   async (req: Request, res: Response, next: NextFunction) => {
     try {

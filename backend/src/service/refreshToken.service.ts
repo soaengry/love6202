@@ -37,3 +37,11 @@ export async function countDevices(userId: number): Promise<number> {
   const keys = await redis.keys(`refresh:${userId}:*`);
   return keys.length;
 }
+
+export async function evictOldestDevice(userId: number): Promise<void> {
+  const keys = await redis.keys(`refresh:${userId}:*`);
+  if (keys.length === 0) return;
+  const ttls = await Promise.all(keys.map((k) => redis.ttl(k)));
+  const oldestIdx = ttls.indexOf(Math.min(...ttls));
+  await redis.del(keys[oldestIdx]);
+}

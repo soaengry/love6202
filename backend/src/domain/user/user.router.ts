@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { authenticate } from "@/middleware/auth";
-import { uploadProfileImage } from "@/middleware/upload";
+import { uploadProfileImage, validateUploadedFiles } from "@/middleware/upload";
 import { apiResponse } from "@/util/apiResponse";
 import * as userService from "./user.service";
 
@@ -20,6 +20,7 @@ router.get("/me", async (req: Request, res: Response, next: NextFunction) => {
 router.patch(
   "/me",
   uploadProfileImage,
+  validateUploadedFiles,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { nickname, removeProfileImage } = req.body;

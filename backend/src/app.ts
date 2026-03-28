@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
+import rateLimit from "express-rate-limit";
 import { errorHandler } from "@/middleware/errorHandler";
 import { env } from "@/config/env";
 import authRouter from "@/domain/user/auth.router";
@@ -31,7 +32,20 @@ app.get("/login/oauth2/code/google", (req, res) => {
   res.redirect(`${env.FRONTEND_URL}/oauth2/callback?code=${encodeURIComponent(code)}`);
 });
 
-app.use("/api/auth", authRouter);
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15분
+  max: env.NODE_ENV === "test" ? 10_000 : 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (_req, res) => {
+    res.status(429).json({
+      status: { code: 429, message: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요." },
+      data: null,
+    });
+  },
+});
+
+app.use("/api/auth", authLimiter, authRouter);
 app.use("/api/users", userRouter);
 app.use("/api/weddings", weddingRouter);
 app.use("/api/banks", bankRouter);
