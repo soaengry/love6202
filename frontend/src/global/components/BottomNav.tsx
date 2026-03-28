@@ -2,12 +2,12 @@ import type { FC } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/domain/auth/store/useAuthStore.ts";
 import {
-  IoInformationCircleOutline,
-  IoInformationCircle,
-  IoCardOutline,
-  IoCard,
-  IoChatbubbleEllipsesOutline,
-  IoChatbubbleEllipses,
+  IoHeartCircleOutline,
+  IoHeartCircle,
+  IoGiftOutline,
+  IoGift,
+  IoFootstepsOutline,
+  IoFootsteps,
   IoImagesOutline,
   IoImages,
   IoCloudUploadOutline,
@@ -24,11 +24,36 @@ interface BottomNavProps {
 }
 
 const tabs = [
-  { id: "info" as TabId, label: "정보", icon: IoInformationCircleOutline, activeIcon: IoInformationCircle },
-  { id: "account" as TabId, label: "축의금", icon: IoCardOutline, activeIcon: IoCard },
-  { id: "guestbook" as TabId, label: "방명록", icon: IoChatbubbleEllipsesOutline, activeIcon: IoChatbubbleEllipses },
-  { id: "gallery" as TabId, label: "갤러리", icon: IoImagesOutline, activeIcon: IoImages },
-  { id: "upload" as TabId, label: "업로드", icon: IoCloudUploadOutline, activeIcon: IoCloudUpload },
+  {
+    id: "info" as TabId,
+    label: "정보",
+    icon: IoHeartCircleOutline,
+    activeIcon: IoHeartCircle,
+  },
+  {
+    id: "account" as TabId,
+    label: "축의금",
+    icon: IoGiftOutline,
+    activeIcon: IoGift,
+  },
+  {
+    id: "guestbook" as TabId,
+    label: "방명록",
+    icon: IoFootstepsOutline,
+    activeIcon: IoFootsteps,
+  },
+  {
+    id: "gallery" as TabId,
+    label: "갤러리",
+    icon: IoImagesOutline,
+    activeIcon: IoImages,
+  },
+  {
+    id: "upload" as TabId,
+    label: "업로드",
+    icon: IoCloudUploadOutline,
+    activeIcon: IoCloudUpload,
+  },
 ] as const;
 
 const myPageTab = {
@@ -42,7 +67,8 @@ export const BottomNav: FC<BottomNavProps> = ({ activeTab, onTabChange }) => {
   const location = useLocation();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isMyPage = location.pathname === "/me";
-  const isWeddingPage = location.pathname === "/" || /^\/\d+$/.test(location.pathname);
+  const isWeddingPage =
+    location.pathname === "/" || /^\/\d+$/.test(location.pathname);
 
   return (
     <nav className="bottom-nav fixed bottom-0 left-0 right-0 bg-bg-primary border-t border-border z-50">
@@ -60,10 +86,12 @@ export const BottomNav: FC<BottomNavProps> = ({ activeTab, onTabChange }) => {
                 onTabChange(tab.id);
               }}
               className={`flex flex-col items-center justify-center gap-0.5 w-full h-full cursor-pointer transition-colors ${
-                isActive ? "text-primary" : "text-text-secondary hover:text-text-primary"
+                isActive
+                  ? "text-primary"
+                  : "text-text-secondary hover:text-text-primary"
               }`}
             >
-              <Icon className="text-xl" />
+              <Icon className="text-2xl" />
               <span className="text-[10px] font-medium">{tab.label}</span>
             </button>
           );
@@ -73,10 +101,16 @@ export const BottomNav: FC<BottomNavProps> = ({ activeTab, onTabChange }) => {
           <button
             onClick={() => navigate("/me")}
             className={`flex flex-col items-center justify-center gap-0.5 w-full h-full cursor-pointer transition-colors ${
-              isMyPage ? "text-primary" : "text-text-secondary hover:text-text-primary"
+              isMyPage
+                ? "text-primary"
+                : "text-text-secondary hover:text-text-primary"
             }`}
           >
-            {isMyPage ? <myPageTab.activeIcon className="text-xl" /> : <myPageTab.icon className="text-xl" />}
+            {isMyPage ? (
+              <myPageTab.activeIcon className="text-xl" />
+            ) : (
+              <myPageTab.icon className="text-xl" />
+            )}
             <span className="text-[10px] font-medium">{myPageTab.label}</span>
           </button>
         )}
