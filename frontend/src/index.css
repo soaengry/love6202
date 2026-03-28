@@ -163,3 +163,35 @@ body {
   user-select: none;
   -webkit-touch-callout: none;
 }
+
+/* ─── Floating Light Particles ─── */
+@keyframes particle-float {
+  0% {
+    transform: translateY(0) translateX(0) scale(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(-10vh) translateX(5px) scale(1);
+  }
+  90% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(-85vh) translateX(-10px) scale(0.3);
+    opacity: 0;
+  }
+}
+
+.landing-particle {
+  position: absolute;
+  bottom: 0;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 70%);
+  pointer-events: none;
+  animation: particle-float var(--duration) var(--delay) ease-in-out infinite;
+  opacity: 0;
+  filter: blur(0.5px);
+}

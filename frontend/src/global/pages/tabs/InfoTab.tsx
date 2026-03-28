@@ -128,6 +128,24 @@ const LandingSection: FC<InfoTabProps> = ({ data }) => {
         />
       )}
 
+      {/* 부유하는 빛 입자 */}
+      <div className="landing-particles absolute inset-0 pointer-events-none overflow-hidden">
+        {Array.from({ length: 18 }, (_, i) => (
+          <span
+            key={i}
+            className="landing-particle"
+            style={
+              {
+                left: `${8 + ((i * 7.5) % 85)}%`,
+                "--size": `${3 + (i % 4) * 2}px`,
+                "--duration": `${6 + (i % 5) * 2}s`,
+                "--delay": `${(i * 1.3) % 8}s`,
+              } as React.CSSProperties
+            }
+          />
+        ))}
+      </div>
+
       <div className="absolute bottom-0 left-0 right-0 pb-12 px-6 text-center text-white">
         {groom && bride && (
           <p className="text-lg tracking-[0.3em] font-light mb-3 drop-shadow-lg">
