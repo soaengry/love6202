@@ -8,6 +8,38 @@ import * as weddingService from "./wedding.service";
 
 const router = Router();
 
+// ─── Public ─────────────────────────────────────────────
+
+// GET /api/weddings/latest — 최신 초대장 공개 조회
+router.get(
+  "/latest",
+  async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await weddingService.getLatestWedding();
+      res.json(apiResponse.ok("초대장 조회 성공", result));
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// GET /api/weddings/:id — 초대장 공개 조회
+router.get(
+  "/:id",
+  validate({ params: weddingIdParamSchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params as unknown as { id: number };
+      const result = await weddingService.getWedding(id);
+      res.json(apiResponse.ok("초대장 조회 성공", result));
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// ─── Protected ──────────────────────────────────────────
+
 router.use(authenticate);
 
 // POST /api/weddings — 초대장 생성
@@ -73,21 +105,6 @@ router.get("/me", async (req: Request, res: Response, next: NextFunction) => {
     next(err);
   }
 });
-
-// GET /api/weddings/:id — 초대장 조회
-router.get(
-  "/:id",
-  validate({ params: weddingIdParamSchema }),
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { id } = req.params as unknown as { id: number };
-      const result = await weddingService.getWedding(id);
-      res.json(apiResponse.ok("초대장 조회 성공", result));
-    } catch (err) {
-      next(err);
-    }
-  },
-);
 
 // DELETE /api/weddings/:id — 초대장 삭제 (soft delete)
 router.delete(

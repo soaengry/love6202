@@ -18,6 +18,7 @@ export interface WeddingResponse {
   notice: string | null;
   parkingInfo: string | null;
   mealInfo: string | null;
+  greeting: string | null;
   createdAt: Date;
 }
 
@@ -44,9 +45,9 @@ export interface CoupleResponse {
 export interface AccountResponse {
   id: number;
   side: AccountSide;
-  bankName: string;
-  bankCode: string;
-  accountNumber: string;
+  bankName: string | null;
+  bankCode: string | null;
+  accountNumber: string | null;
   accountHolder: string;
   kakaoPayUrl: string | null;
   tossNumber: string | null;
@@ -112,6 +113,7 @@ export function toWeddingDetailResponse(w: WeddingWithRelations): WeddingDetailR
       notice: w.notice,
       parkingInfo: w.parkingInfo,
       mealInfo: w.mealInfo,
+      greeting: w.greeting,
       createdAt: w.createdAt,
     },
     heroImages: w.heroImages

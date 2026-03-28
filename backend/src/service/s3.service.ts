@@ -3,6 +3,7 @@ import {
   PutObjectCommand,
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
+import sharp from "sharp";
 import { env } from "@/config/env";
 import crypto from "crypto";
 
@@ -28,6 +29,45 @@ export async function uploadImage(
     }),
   );
   return `https://${env.AWS_BUCKET}.s3.${env.AWS_REGION}.amazonaws.com/${key}`;
+}
+
+export async function uploadImageWithThumbnail(
+  file: Express.Multer.File,
+): Promise<{ imageUrl: string; thumbnailUrl: string }> {
+  const uuid = crypto.randomUUID();
+  const originalKey = `galleries/${uuid}-${file.originalname}`;
+  const thumbKey = `galleries/thumbs/${uuid}-${file.originalname}`;
+
+  // 원본 업로드
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: env.AWS_BUCKET,
+      Key: originalKey,
+      Body: file.buffer,
+      ContentType: file.mimetype,
+    }),
+  );
+
+  // 썸네일 생성 (400px 리사이즈)
+  const thumbBuffer = await sharp(file.buffer)
+    .resize(400, undefined, { withoutEnlargement: true })
+    .jpeg({ quality: 80 })
+    .toBuffer();
+
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: env.AWS_BUCKET,
+      Key: thumbKey,
+      Body: thumbBuffer,
+      ContentType: "image/jpeg",
+    }),
+  );
+
+  const baseUrl = `https://${env.AWS_BUCKET}.s3.${env.AWS_REGION}.amazonaws.com`;
+  return {
+    imageUrl: `${baseUrl}/${originalKey}`,
+    thumbnailUrl: `${baseUrl}/${thumbKey}`,
+  };
 }
 
 export async function deleteFile(url: string): Promise<void> {

@@ -9,15 +9,18 @@ interface ImageUploaderProps {
   onChange: (files: File[]) => void;
   maxCount?: number;
   label?: string;
+  existingUrls?: string[];
+  onRemoveExisting?: (index: number) => void;
 }
 
-export const ImageUploader: FC<ImageUploaderProps> = ({ images, onChange, maxCount = 4, label = "이미지 업로드" }) => {
+export const ImageUploader: FC<ImageUploaderProps> = ({ images, onChange, maxCount = 4, label = "이미지 업로드", existingUrls = [], onRemoveExisting }) => {
   const inputRef = useRef<HTMLInputElement>(null);
+  const totalCount = existingUrls.length + images.length;
 
   const handleSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     const valid = files.filter((f) => ALLOWED_TYPES.includes(f.type) && f.size <= MAX_FILE_SIZE);
-    const remaining = maxCount - images.length;
+    const remaining = maxCount - totalCount;
     if (remaining > 0) {
       onChange([...images, ...valid.slice(0, remaining)]);
     }
@@ -34,8 +37,22 @@ export const ImageUploader: FC<ImageUploaderProps> = ({ images, onChange, maxCou
       <label className="block text-sm font-medium text-text-primary mb-2">{label}</label>
 
       {/* 미리보기 */}
-      {images.length > 0 && (
+      {totalCount > 0 && (
         <div className="flex gap-2 flex-wrap mb-3">
+          {existingUrls.map((url, i) => (
+            <div key={`existing-${i}`} className="relative w-20 h-20 rounded-lg overflow-hidden border border-border">
+              <img src={url} alt={`기존 이미지 ${i + 1}`} className="w-full h-full object-cover" />
+              {onRemoveExisting && (
+                <button
+                  type="button"
+                  onClick={() => onRemoveExisting(i)}
+                  className="absolute top-0.5 right-0.5 text-white bg-overlay rounded-full cursor-pointer"
+                >
+                  <IoCloseCircleOutline size={18} />
+                </button>
+              )}
+            </div>
+          ))}
           {images.map((file, i) => (
             <div key={`${file.name}-${i}`} className="relative w-20 h-20 rounded-lg overflow-hidden border border-border">
               <img
@@ -47,7 +64,7 @@ export const ImageUploader: FC<ImageUploaderProps> = ({ images, onChange, maxCou
               <button
                 type="button"
                 onClick={() => handleRemove(i)}
-                className="absolute top-0.5 right-0.5 text-white bg-black/50 rounded-full cursor-pointer"
+                className="absolute top-0.5 right-0.5 text-white bg-overlay rounded-full cursor-pointer"
               >
                 <IoCloseCircleOutline size={18} />
               </button>
@@ -57,14 +74,14 @@ export const ImageUploader: FC<ImageUploaderProps> = ({ images, onChange, maxCou
       )}
 
       {/* 업로드 버튼 */}
-      {images.length < maxCount && (
+      {totalCount < maxCount && (
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
           className="flex items-center gap-2 px-4 py-2.5 border border-dashed border-border rounded-xl text-sm text-text-secondary hover:border-primary hover:text-primary transition-colors cursor-pointer"
         >
           <IoCloudUploadOutline size={18} />
-          {label} ({images.length}/{maxCount})
+          {label} ({totalCount}/{maxCount})
         </button>
       )}
 
@@ -122,7 +139,7 @@ export const SingleImageUploader: FC<SingleImageUploaderProps> = ({ image, previ
         <button
           type="button"
           onClick={() => onChange(null)}
-          className="text-xs text-red-500 hover:underline cursor-pointer"
+          className="text-xs text-error hover:underline cursor-pointer"
         >
           삭제
         </button>

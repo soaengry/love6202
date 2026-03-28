@@ -1,5 +1,5 @@
 import { useState, useEffect, type FC } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence } from "framer-motion";
@@ -31,6 +31,7 @@ const weddingFormSchema = z.object({
     notice: z.string().optional().or(z.literal("")),
     parkingInfo: z.string().optional().or(z.literal("")),
     mealInfo: z.string().optional().or(z.literal("")),
+    greeting: z.string().max(1000).optional().or(z.literal("")),
   }),
   couples: z.array(
     z.object({
@@ -83,8 +84,17 @@ const weddingFormSchema = z.object({
 
 function toFormData(res: WeddingDetailResponse): WeddingFormData {
   const w = res.wedding;
-  // datetime-local 형식으로 변환 (YYYY-MM-DDTHH:mm)
-  const dateLocal = w.weddingDate ? new Date(w.weddingDate).toISOString().slice(0, 16) : "";
+  // datetime-local 형식으로 변환 (로컬 시간 기준 YYYY-MM-DDTHH:mm)
+  let dateLocal = "";
+  if (w.weddingDate) {
+    const d = new Date(w.weddingDate);
+    const yyyy = d.getFullYear();
+    const MM = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    const hh = String(d.getHours()).padStart(2, "0");
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    dateLocal = `${yyyy}-${MM}-${dd}T${hh}:${mm}`;
+  }
 
   return {
     wedding: {
@@ -99,6 +109,7 @@ function toFormData(res: WeddingDetailResponse): WeddingFormData {
       notice: w.notice ?? "",
       parkingInfo: w.parkingInfo ?? "",
       mealInfo: w.mealInfo ?? "",
+      greeting: w.greeting ?? "",
     },
     couples: res.couples.map((c) => ({
       role: c.role,
@@ -112,9 +123,9 @@ function toFormData(res: WeddingDetailResponse): WeddingFormData {
     })),
     accounts: res.accounts.map((a) => ({
       side: a.side,
-      bankName: a.bankName,
-      bankCode: a.bankCode,
-      accountNumber: a.accountNumber,
+      bankName: a.bankName ?? "",
+      bankCode: a.bankCode ?? "",
+      accountNumber: a.accountNumber ?? "",
       accountHolder: a.accountHolder,
       kakaoPayUrl: a.kakaoPayUrl ?? "",
       tossNumber: a.tossNumber ?? "",
@@ -142,6 +153,8 @@ function toFormData(res: WeddingDetailResponse): WeddingFormData {
 
 export const WeddingEditPage: FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const queryWeddingId = searchParams.get("weddingId");
   const [step, setStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -151,11 +164,14 @@ export const WeddingEditPage: FC = () => {
   const [heroImages, setHeroImages] = useState<File[]>([]);
   const [groomProfileImage, setGroomProfileImage] = useState<File | null>(null);
   const [brideProfileImage, setBrideProfileImage] = useState<File | null>(null);
+  const [existingHeroUrls, setExistingHeroUrls] = useState<string[]>([]);
+  const [groomPreviewUrl, setGroomPreviewUrl] = useState<string | undefined>();
+  const [bridePreviewUrl, setBrewPreviewUrl] = useState<string | undefined>();
 
   const form = useForm<WeddingFormData>({
     resolver: zodResolver(weddingFormSchema),
     defaultValues: {
-      wedding: { title: "", weddingDate: "", venueName: "", venueAddress: "", venueDetail: "", venueLat: null, venueLng: null, dressCode: "", notice: "", parkingInfo: "", mealInfo: "" },
+      wedding: { title: "", weddingDate: "", venueName: "", venueAddress: "", venueDetail: "", venueLat: null, venueLng: null, dressCode: "", notice: "", parkingInfo: "", mealInfo: "", greeting: "" },
       couples: [],
       accounts: [],
       schedules: [],
@@ -173,9 +189,16 @@ export const WeddingEditPage: FC = () => {
   useEffect(() => {
     (async () => {
       try {
-        const { data } = await weddingApi.getMyWedding();
+        const { data } = queryWeddingId
+          ? await weddingApi.getWedding(Number(queryWeddingId))
+          : await weddingApi.getMyWedding();
         setWeddingId(data.wedding.id);
         reset(toFormData(data));
+        setExistingHeroUrls(data.heroImages.map((h) => h.imageUrl));
+        const groom = data.couples.find((c) => c.role === "GROOM");
+        const bride = data.couples.find((c) => c.role === "BRIDE");
+        setGroomPreviewUrl(groom?.profileImageUrl ?? undefined);
+        setBrewPreviewUrl(bride?.profileImageUrl ?? undefined);
       } catch {
         toast.error("초대장 정보를 불러올 수 없습니다.");
         navigate("/me", { replace: true });
@@ -199,6 +222,7 @@ export const WeddingEditPage: FC = () => {
     try {
       const submitData = {
         ...data,
+        existingHeroImageUrls: existingHeroUrls,
         wedding: {
           ...data.wedding,
           weddingDate: new Date(data.wedding.weddingDate).toISOString(),
@@ -249,11 +273,11 @@ export const WeddingEditPage: FC = () => {
         animate={{ opacity: 1 }}
         className="max-w-lg mx-auto p-6"
       >
-        <h1 className="text-xl font-bold text-gray-800 mb-6 text-center">초대장 수정하기</h1>
+        <h1 className="text-xl font-bold text-text-primary mb-6 text-center">초대장 수정하기</h1>
 
         <StepIndicator currentStep={step} onStepClick={setStep} />
 
-        <form onSubmit={handleSubmit(onSubmit)} className="bg-bg-primary rounded-2xl shadow-sm border border-border p-6">
+        <form onSubmit={(e) => e.preventDefault()} className="bg-bg-primary rounded-2xl shadow-sm border border-border p-6">
           <AnimatePresence mode="wait">
             <motion.div
               key={step}
@@ -271,6 +295,8 @@ export const WeddingEditPage: FC = () => {
                   setValue={setValue}
                   venueLat={venueLat}
                   venueLng={venueLng}
+                  existingHeroUrls={existingHeroUrls}
+                  onRemoveExistingHero={(i) => setExistingHeroUrls((prev) => prev.filter((_, idx) => idx !== i))}
                 />
               )}
               {step === 1 && (
@@ -281,6 +307,8 @@ export const WeddingEditPage: FC = () => {
                   brideProfileImage={brideProfileImage}
                   onGroomImageChange={setGroomProfileImage}
                   onBrideImageChange={setBrideProfileImage}
+                  groomPreviewUrl={groomPreviewUrl}
+                  bridePreviewUrl={bridePreviewUrl}
                 />
               )}
               {step === 2 && (
@@ -317,8 +345,9 @@ export const WeddingEditPage: FC = () => {
               </button>
             ) : (
               <button
-                type="submit"
+                type="button"
                 disabled={isSubmitting}
+                onClick={() => handleSubmit(onSubmit)()}
                 className="flex-1 py-3 bg-primary text-white font-medium rounded-xl hover:bg-primary-dark transition-colors disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1"
               >
                 {isSubmitting ? (

@@ -3,8 +3,15 @@ import { AppError } from "@/util/appError";
 import { uploadImage } from "@/service/s3.service";
 import { geocode } from "@/service/kakao.service";
 import { WeddingErrorCode } from "./wedding.error";
-import { toWeddingDetailResponse, type WeddingDetailResponse } from "./wedding.types";
+import {
+  toWeddingDetailResponse,
+  type WeddingDetailResponse,
+} from "./wedding.types";
 import type { CreateWeddingBody, UpdateWeddingBody } from "./wedding.schema";
+
+import type { Prisma } from "@prisma/client";
+
+type TxClient = Prisma.TransactionClient;
 
 const WEDDING_INCLUDE = {
   heroImages: true,
@@ -20,10 +27,16 @@ const WEDDING_INCLUDE = {
 export async function createWedding(
   userId: number,
   body: CreateWeddingBody,
-  files: { heroImages?: Express.Multer.File[]; groomProfileImage?: Express.Multer.File[]; brideProfileImage?: Express.Multer.File[] },
+  files: {
+    heroImages?: Express.Multer.File[];
+    groomProfileImage?: Express.Multer.File[];
+    brideProfileImage?: Express.Multer.File[];
+  },
 ): Promise<WeddingDetailResponse> {
   // 1. 사용자 확인
-  const user = await prisma.user.findFirst({ where: { id: userId, deletedAt: null } });
+  const user = await prisma.user.findFirst({
+    where: { id: userId, deletedAt: null },
+  });
   if (!user) throw AppError.from(WeddingErrorCode.WEDDING_UNAUTHORIZED);
 
   // 2. 기존 wedding 중복 체크
@@ -43,8 +56,12 @@ export async function createWedding(
   // 4. Couple profile images 업로드
   const groomFile = files.groomProfileImage?.[0];
   const brideFile = files.brideProfileImage?.[0];
-  const groomProfileUrl = groomFile ? await uploadImage(groomFile, "weddings/profiles") : null;
-  const brideProfileUrl = brideFile ? await uploadImage(brideFile, "weddings/profiles") : null;
+  const groomProfileUrl = groomFile
+    ? await uploadImage(groomFile, "weddings/profiles")
+    : null;
+  const brideProfileUrl = brideFile
+    ? await uploadImage(brideFile, "weddings/profiles")
+    : null;
 
   // 5. Transaction으로 모든 entity 생성
   const wedding = await prisma.$transaction(async (tx) => {
@@ -60,6 +77,7 @@ export async function createWedding(
         notice: body.wedding.notice || null,
         parkingInfo: body.wedding.parkingInfo || null,
         mealInfo: body.wedding.mealInfo || null,
+        greeting: body.wedding.greeting || null,
         heroImages: {
           create: heroImageUrls.map((url, i) => ({
             imageUrl: url,
@@ -76,15 +94,16 @@ export async function createWedding(
             isFatherAlive: c.isFatherAlive,
             motherName: c.motherName || null,
             isMotherAlive: c.isMotherAlive,
-            profileImageUrl: c.role === "GROOM" ? groomProfileUrl : brideProfileUrl,
+            profileImageUrl:
+              c.role === "GROOM" ? groomProfileUrl : brideProfileUrl,
           })),
         },
         accounts: {
           create: body.accounts.map((a) => ({
             side: a.side,
-            bankName: a.bankName,
-            bankCode: a.bankCode,
-            accountNumber: a.accountNumber,
+            bankName: a.bankName || null,
+            bankCode: a.bankCode || null,
+            accountNumber: a.accountNumber || null,
             accountHolder: a.accountHolder,
             kakaoPayUrl: a.kakaoPayUrl || null,
             tossNumber: a.tossNumber || null,
@@ -126,6 +145,12 @@ export async function createWedding(
       },
     });
 
+    // Couple 이메일로 자동 HOST 부여
+    const coupleEmails = body.couples
+      .map((c) => c.email)
+      .filter((e): e is string => !!e);
+    await syncCoupleHosts(tx, created.id, coupleEmails, [], userId);
+
     return created;
   });
 
@@ -138,7 +163,11 @@ export async function updateWedding(
   userId: number,
   weddingId: number,
   body: UpdateWeddingBody,
-  files: { heroImages?: Express.Multer.File[]; groomProfileImage?: Express.Multer.File[]; brideProfileImage?: Express.Multer.File[] },
+  files: {
+    heroImages?: Express.Multer.File[];
+    groomProfileImage?: Express.Multer.File[];
+    brideProfileImage?: Express.Multer.File[];
+  },
 ): Promise<WeddingDetailResponse> {
   // 1. 권한 확인
   const wedding = await prisma.wedding.findFirst({
@@ -146,29 +175,51 @@ export async function updateWedding(
   });
   if (!wedding) throw AppError.from(WeddingErrorCode.WEDDING_NOT_FOUND);
 
-  const user = await prisma.user.findFirst({ where: { id: userId, deletedAt: null } });
+  const user = await prisma.user.findFirst({
+    where: { id: userId, deletedAt: null },
+  });
   if (!user || (user.weddingId !== weddingId && user.role !== "ADMIN")) {
     throw AppError.from(WeddingErrorCode.WEDDING_UNAUTHORIZED);
   }
 
-  // 2. 이미지 업로드
+  // 2. 기존 이미지 조회 (새 파일 미업로드 시 보존용)
+  const existingCouples = await prisma.couple.findMany({ where: { weddingId } });
+  const existingGroomProfileUrl = existingCouples.find((c) => c.role === "GROOM")?.profileImageUrl ?? null;
+  const existingBrideProfileUrl = existingCouples.find((c) => c.role === "BRIDE")?.profileImageUrl ?? null;
+
+  // 3. 이미지 업로드
   const heroFiles = files.heroImages ?? [];
   if (heroFiles.length > 4) {
     throw AppError.from(WeddingErrorCode.HERO_IMAGE_LIMIT_EXCEEDED);
   }
-  const heroImageUrls = await Promise.all(
+  const newHeroImageUrls = await Promise.all(
     heroFiles.map((f) => uploadImage(f, "weddings/heroes")),
   );
+  // 기존 유지할 hero URL + 새로 업로드된 URL
+  const existingHeroUrls: string[] = body.existingHeroImageUrls ?? [];
+  const allHeroImageUrls = [...existingHeroUrls, ...newHeroImageUrls];
 
   const groomFile = files.groomProfileImage?.[0];
   const brideFile = files.brideProfileImage?.[0];
-  const groomProfileUrl = groomFile ? await uploadImage(groomFile, "weddings/profiles") : null;
-  const brideProfileUrl = brideFile ? await uploadImage(brideFile, "weddings/profiles") : null;
+  const groomProfileUrl = groomFile
+    ? await uploadImage(groomFile, "weddings/profiles")
+    : existingGroomProfileUrl;
+  const brideProfileUrl = brideFile
+    ? await uploadImage(brideFile, "weddings/profiles")
+    : existingBrideProfileUrl;
 
-  // 3. 주소 변경 여부 확인
+  // 4. 주소 변경 여부 확인
   const addressChanged = wedding.venueAddress !== body.wedding.venueAddress;
 
-  // 4. Transaction: 본체 update + 서브 리소스 delete-recreate
+  // 5. 기존/신규 couple 이메일 추출
+  const oldCoupleEmails = existingCouples
+    .map((c) => c.email)
+    .filter((e): e is string => !!e);
+  const newCoupleEmails = body.couples
+    .map((c) => c.email)
+    .filter((e): e is string => !!e);
+
+  // 6. Transaction: 본체 update + 서브 리소스 delete-recreate
   const updated = await prisma.$transaction(async (tx) => {
     // 기존 서브 리소스 삭제
     await tx.heroImage.deleteMany({ where: { weddingId } });
@@ -179,7 +230,7 @@ export async function updateWedding(
     await tx.announcement.deleteMany({ where: { weddingId } });
 
     // Wedding 본체 + 서브 리소스 재생성
-    return tx.wedding.update({
+    const result = await tx.wedding.update({
       where: { id: weddingId, version: wedding.version },
       data: {
         title: body.wedding.title,
@@ -193,9 +244,10 @@ export async function updateWedding(
         notice: body.wedding.notice || null,
         parkingInfo: body.wedding.parkingInfo || null,
         mealInfo: body.wedding.mealInfo || null,
+        greeting: body.wedding.greeting || null,
         version: { increment: 1 },
         heroImages: {
-          create: heroImageUrls.map((url, i) => ({
+          create: allHeroImageUrls.map((url, i) => ({
             imageUrl: url,
             orderIndex: i,
           })),
@@ -210,15 +262,16 @@ export async function updateWedding(
             isFatherAlive: c.isFatherAlive,
             motherName: c.motherName || null,
             isMotherAlive: c.isMotherAlive,
-            profileImageUrl: c.role === "GROOM" ? groomProfileUrl : brideProfileUrl,
+            profileImageUrl:
+              c.role === "GROOM" ? groomProfileUrl : brideProfileUrl,
           })),
         },
         accounts: {
           create: body.accounts.map((a) => ({
             side: a.side,
-            bankName: a.bankName,
-            bankCode: a.bankCode,
-            accountNumber: a.accountNumber,
+            bankName: a.bankName || null,
+            bankCode: a.bankCode || null,
+            accountNumber: a.accountNumber || null,
             accountHolder: a.accountHolder,
             kakaoPayUrl: a.kakaoPayUrl || null,
             tossNumber: a.tossNumber || null,
@@ -250,6 +303,11 @@ export async function updateWedding(
       },
       include: WEDDING_INCLUDE,
     });
+
+    // Couple 이메일로 자동 HOST 부여/해제
+    await syncCoupleHosts(tx, weddingId, newCoupleEmails, oldCoupleEmails, wedding!.userId);
+
+    return result;
   });
 
   return toWeddingDetailResponse(updated);
@@ -257,7 +315,21 @@ export async function updateWedding(
 
 // ─── Read ───────────────────────────────────────────────
 
-export async function getWedding(weddingId: number): Promise<WeddingDetailResponse> {
+export async function getLatestWedding(): Promise<WeddingDetailResponse> {
+  const wedding = await prisma.wedding.findFirst({
+    where: { deletedAt: null },
+    orderBy: { id: "desc" },
+    include: WEDDING_INCLUDE,
+  });
+  if (!wedding) throw AppError.from(WeddingErrorCode.WEDDING_NOT_FOUND);
+
+  await resolveGeocode(wedding);
+  return toWeddingDetailResponse(wedding);
+}
+
+export async function getWedding(
+  weddingId: number,
+): Promise<WeddingDetailResponse> {
   const wedding = await prisma.wedding.findFirst({
     where: { id: weddingId, deletedAt: null },
     include: WEDDING_INCLUDE,
@@ -268,23 +340,41 @@ export async function getWedding(weddingId: number): Promise<WeddingDetailRespon
   return toWeddingDetailResponse(wedding);
 }
 
-export async function getMyWedding(userId: number): Promise<WeddingDetailResponse> {
-  const user = await prisma.user.findFirst({ where: { id: userId, deletedAt: null } });
-  if (!user?.weddingId) throw AppError.from(WeddingErrorCode.WEDDING_NOT_FOUND);
+export async function getMyWedding(
+  userId: number,
+): Promise<WeddingDetailResponse | null> {
+  const user = await prisma.user.findFirst({
+    where: { id: userId, deletedAt: null },
+  });
+  if (!user) return null;
 
-  return getWedding(user.weddingId);
+  const wedding = await prisma.wedding.findFirst({
+    where: {
+      deletedAt: null,
+      couples: { some: { email: user.email } },
+    },
+    include: WEDDING_INCLUDE,
+  });
+  if (!wedding) return null;
+
+  return toWeddingDetailResponse(wedding);
 }
 
 // ─── Delete ─────────────────────────────────────────────
 
-export async function deleteWedding(userId: number, weddingId: number): Promise<void> {
+export async function deleteWedding(
+  userId: number,
+  weddingId: number,
+): Promise<void> {
   const wedding = await prisma.wedding.findFirst({
     where: { id: weddingId, deletedAt: null },
   });
   if (!wedding) throw AppError.from(WeddingErrorCode.WEDDING_NOT_FOUND);
 
   // 권한 확인: 생성자 또는 ADMIN
-  const user = await prisma.user.findFirst({ where: { id: userId, deletedAt: null } });
+  const user = await prisma.user.findFirst({
+    where: { id: userId, deletedAt: null },
+  });
   if (!user || (user.weddingId !== weddingId && user.role !== "ADMIN")) {
     throw AppError.from(WeddingErrorCode.WEDDING_UNAUTHORIZED);
   }
@@ -297,7 +387,12 @@ export async function deleteWedding(userId: number, weddingId: number): Promise<
 
 // ─── Helpers ────────────────────────────────────────────
 
-async function resolveGeocode(wedding: { id: number; venueAddress: string; venueLat: number | null; venueLng: number | null }) {
+async function resolveGeocode(wedding: {
+  id: number;
+  venueAddress: string;
+  venueLat: number | null;
+  venueLng: number | null;
+}) {
   if (wedding.venueLat !== null && wedding.venueLng !== null) return;
 
   const coord = await geocode(wedding.venueAddress).catch(() => null);
@@ -309,4 +404,45 @@ async function resolveGeocode(wedding: { id: number; venueAddress: string; venue
   });
   wedding.venueLat = coord.lat;
   wedding.venueLng = coord.lng;
+}
+
+async function syncCoupleHosts(
+  tx: TxClient,
+  weddingId: number,
+  newEmails: string[],
+  oldEmails: string[],
+  creatorUserId: number,
+): Promise<void> {
+  // 부여: 새 couple 이메일에 해당하는 유저 → HOST + weddingId 연결
+  for (const email of newEmails) {
+    const user = await tx.user.findFirst({
+      where: { email, deletedAt: null, id: { not: creatorUserId } },
+    });
+    if (user && user.role !== "ADMIN") {
+      await tx.user.update({
+        where: { id: user.id },
+        data: { weddingId, role: "HOST" },
+      });
+    }
+  }
+
+  // 해제: 제거된 couple 이메일의 유저 → GUEST + weddingId 해제
+  const removedEmails = oldEmails.filter((e) => !newEmails.includes(e));
+  for (const email of removedEmails) {
+    const user = await tx.user.findFirst({
+      where: {
+        email,
+        deletedAt: null,
+        weddingId,
+        id: { not: creatorUserId },
+        role: "HOST",
+      },
+    });
+    if (user) {
+      await tx.user.update({
+        where: { id: user.id },
+        data: { weddingId: null, role: "GUEST" },
+      });
+    }
+  }
 }

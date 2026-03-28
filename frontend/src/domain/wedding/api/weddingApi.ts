@@ -19,6 +19,10 @@ export const weddingApi = {
     return api.get<WeddingDetailResponse>(WEDDING_API.ME);
   },
 
+  getLatestWedding() {
+    return api.get<WeddingDetailResponse>(WEDDING_API.LATEST);
+  },
+
   getWedding(id: number) {
     return api.get<WeddingDetailResponse>(WEDDING_API.DETAIL(id));
   },
@@ -32,6 +36,8 @@ export const weddingApi = {
   },
 
   detectBank(accountNumber: string) {
-    return api.get<{ bankCode: string; bankName: string }>(`${BANK_API.DETECT}?accountNumber=${encodeURIComponent(accountNumber)}`);
+    return api.get<{ bankCode: string; bankName: string }>(
+      `${BANK_API.DETECT}?accountNumber=${encodeURIComponent(accountNumber)}`,
+    );
   },
 };

@@ -13,10 +13,13 @@ export function validate(schemas: ValidationSchemas) {
       req.body = schemas.body.parse(req.body);
     }
     if (schemas.params) {
-      req.params = schemas.params.parse(req.params) as typeof req.params;
+      const parsed = schemas.params.parse(req.params);
+      Object.assign(req.params, parsed);
     }
     if (schemas.query) {
-      req.query = schemas.query.parse(req.query) as typeof req.query;
+      const parsed = schemas.query.parse(req.query);
+      Object.keys(req.query).forEach((key) => delete req.query[key]);
+      Object.assign(req.query, parsed);
     }
     next();
   };

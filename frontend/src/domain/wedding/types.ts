@@ -19,6 +19,7 @@ export interface WeddingResponse {
   notice: string | null;
   parkingInfo: string | null;
   mealInfo: string | null;
+  greeting: string | null;
   createdAt: string;
 }
 
@@ -45,9 +46,9 @@ export interface CoupleResponse {
 export interface AccountResponse {
   id: number;
   side: AccountSide;
-  bankName: string;
-  bankCode: string;
-  accountNumber: string;
+  bankName: string | null;
+  bankCode: string | null;
+  accountNumber: string | null;
   accountHolder: string;
   kakaoPayUrl: string | null;
   tossNumber: string | null;
@@ -152,6 +153,7 @@ export interface WeddingFormData {
     notice: string;
     parkingInfo: string;
     mealInfo: string;
+    greeting: string;
   };
   couples: CoupleFormData[];
   accounts: AccountFormData[];

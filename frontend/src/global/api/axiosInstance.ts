@@ -2,6 +2,7 @@ import axios from "axios";
 import type { AxiosRequestConfig } from "axios";
 import { ENV } from "@/global/config/env.ts";
 import { getDeviceId } from "@/domain/auth/auth.utils.ts";
+import { useAuthStore } from "@/domain/auth/store/useAuthStore.ts";
 import type { ApiResponse } from "@/global/types/index.ts";
 
 const api = axios.create({
@@ -71,7 +72,7 @@ api.interceptors.response.use(
       return api(originalRequest);
     } catch (refreshError) {
       processQueue(refreshError);
-      window.location.href = "/login";
+      useAuthStore.getState().logout();
       return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;

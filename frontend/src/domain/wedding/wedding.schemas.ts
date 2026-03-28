@@ -9,6 +9,7 @@ export const basicInfoSchema = z.object({
     venueDetail: z.string().max(500).optional().or(z.literal("")),
     venueLat: z.number().nullable(),
     venueLng: z.number().nullable(),
+    greeting: z.string().max(1000).optional().or(z.literal("")),
   }),
 });
 
@@ -49,6 +50,30 @@ export const accountSchema = z.object({
       tossNumber: z.string().optional().or(z.literal("")),
       orderIndex: z.number(),
       paymentType: z.enum(["BANK", "KAKAOPAY", "TOSS"]),
+    }).superRefine((data, ctx) => {
+      if (!data.accountHolder) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "받는 분을 입력해주세요.",
+          path: ["accountHolder"],
+        });
+      }
+      if (data.paymentType === "BANK") {
+        if (!data.accountNumber) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: "계좌번호를 입력해주세요.", path: ["accountNumber"] });
+        }
+        if (!data.bankName) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: "은행명을 입력해주세요.", path: ["bankName"] });
+        }
+      } else if (data.paymentType === "KAKAOPAY") {
+        if (!data.kakaoPayUrl) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: "카카오페이 송금 URL을 입력해주세요.", path: ["kakaoPayUrl"] });
+        }
+      } else if (data.paymentType === "TOSS") {
+        if (!data.tossNumber) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: "토스 ID를 입력해주세요.", path: ["tossNumber"] });
+        }
+      }
     }),
   ),
 });
@@ -79,7 +104,7 @@ export const extraInfoSchema = z.object({
 
 // 스텝별 필드 이름 (trigger 용)
 export const STEP_FIELDS = [
-  ["wedding.title", "wedding.weddingDate", "wedding.venueName", "wedding.venueAddress", "wedding.venueDetail", "wedding.venueLat", "wedding.venueLng"],
+  ["wedding.title", "wedding.weddingDate", "wedding.venueName", "wedding.venueAddress", "wedding.venueDetail", "wedding.venueLat", "wedding.venueLng", "wedding.greeting"],
   ["couples"],
   ["schedules"],
   ["accounts"],

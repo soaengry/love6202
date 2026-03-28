@@ -1,6 +1,17 @@
 import { useState, useRef, type FC } from "react";
-import { useFieldArray, type Control, type FieldErrors, type UseFormRegister, type UseFormSetValue, useWatch } from "react-hook-form";
-import { IoAddCircleOutline, IoTrashOutline, IoCloseCircleOutline } from "react-icons/io5";
+import {
+  useFieldArray,
+  type Control,
+  type FieldErrors,
+  type UseFormRegister,
+  type UseFormSetValue,
+  useWatch,
+} from "react-hook-form";
+import {
+  IoAddCircleOutline,
+  IoTrashOutline,
+  IoCloseCircleOutline,
+} from "react-icons/io5";
 import type { WeddingFormData, AccountSide, PaymentMethod } from "../types.ts";
 import { weddingApi } from "../api/weddingApi.ts";
 
@@ -18,26 +29,43 @@ const SIDE_OPTIONS: { value: AccountSide; label: string }[] = [
   { value: "BRIDE_FAMILY", label: "신부 혼주측" },
 ];
 
-const PAYMENT_METHODS: { value: PaymentMethod; label: string; icon: string }[] = [
-  { value: "BANK", label: "은행 계좌", icon: "🏦" },
-  { value: "KAKAOPAY", label: "카카오페이", icon: "💛" },
-  { value: "TOSS", label: "토스", icon: "💙" },
-];
+const PAYMENT_METHODS: { value: PaymentMethod; label: string; icon: string }[] =
+  [
+    { value: "BANK", label: "은행 계좌", icon: "🏦" },
+    { value: "KAKAOPAY", label: "카카오페이", icon: "💛" },
+    { value: "TOSS", label: "토스", icon: "💙" },
+  ];
 
-const inputClass = "w-full px-4 py-2.5 border border-border rounded-xl bg-bg-primary text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors";
+const inputClass =
+  "w-full px-4 py-2.5 border border-border rounded-xl bg-bg-primary text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors";
+const inputErrorClass =
+  "w-full px-4 py-2.5 border border-error rounded-xl bg-bg-primary text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-error/50 focus:border-error transition-colors";
 const labelClass = "block text-sm font-medium text-text-primary mb-1";
+const errorMsgClass = "text-xs text-error mt-1";
 
-export const AccountStep: FC<AccountStepProps> = ({ control, errors, register, setValue }) => {
-  const { fields, append, remove } = useFieldArray({ control, name: "accounts" });
+export const AccountStep: FC<AccountStepProps> = ({
+  control,
+  errors,
+  register,
+  setValue,
+}) => {
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "accounts",
+  });
   const accounts = useWatch({ control, name: "accounts" });
   const [detectingMap, setDetectingMap] = useState<Record<number, boolean>>({});
-  const debounceTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
+  const debounceTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>(
+    {},
+  );
 
   const handleAdd = (type: PaymentMethod) => {
     append({
       side: "GROOM",
-      bankName: type === "KAKAOPAY" ? "카카오페이" : type === "TOSS" ? "토스" : "",
-      bankCode: type === "KAKAOPAY" ? "KAKAOPAY" : type === "TOSS" ? "TOSS" : "",
+      bankName:
+        type === "KAKAOPAY" ? "카카오페이" : type === "TOSS" ? "토스" : "",
+      bankCode:
+        type === "KAKAOPAY" ? "KAKAOPAY" : type === "TOSS" ? "TOSS" : "",
       accountNumber: "",
       accountHolder: "",
       kakaoPayUrl: "",
@@ -83,10 +111,17 @@ export const AccountStep: FC<AccountStepProps> = ({ control, errors, register, s
     return accounts?.[index]?.paymentType ?? "BANK";
   };
 
+  const getError = (index: number, field: string): string | undefined => {
+    return (errors.accounts as never)?.[index]?.[field]?.message;
+  };
+
   const renderBankForm = (index: number) => {
     const account = accounts?.[index];
     const isDetecting = detectingMap[index] ?? false;
     const cleaned = (account?.accountNumber ?? "").replace(/[^0-9]/g, "");
+    const accountNumberError = getError(index, "accountNumber");
+    const bankNameError = getError(index, "bankName");
+    const holderError = getError(index, "accountHolder");
 
     return (
       <div className="space-y-3">
@@ -96,8 +131,11 @@ export const AccountStep: FC<AccountStepProps> = ({ control, errors, register, s
             value={account?.accountNumber ?? ""}
             onChange={(e) => handleAccountNumberChange(index, e.target.value)}
             placeholder="계좌번호를 입력하면 은행이 자동 감지됩니다"
-            className={inputClass}
+            className={accountNumberError ? inputErrorClass : inputClass}
           />
+          {accountNumberError && (
+            <p className={errorMsgClass}>{accountNumberError}</p>
+          )}
         </div>
 
         <div className="flex items-center gap-2 min-h-[28px]">
@@ -108,7 +146,9 @@ export const AccountStep: FC<AccountStepProps> = ({ control, errors, register, s
               {account.bankName}
             </span>
           ) : cleaned.length >= 3 ? (
-            <span className="text-xs text-red-400">은행을 감지할 수 없습니다. 직접 입력해주세요.</span>
+            <span className="text-xs text-error">
+              은행을 감지할 수 없습니다. 직접 입력해주세요.
+            </span>
           ) : null}
         </div>
 
@@ -118,8 +158,9 @@ export const AccountStep: FC<AccountStepProps> = ({ control, errors, register, s
             <input
               {...register(`accounts.${index}.bankName`)}
               placeholder="○○은행"
-              className={inputClass}
+              className={bankNameError ? inputErrorClass : inputClass}
             />
+            {bankNameError && <p className={errorMsgClass}>{bankNameError}</p>}
           </div>
         )}
 
@@ -128,62 +169,81 @@ export const AccountStep: FC<AccountStepProps> = ({ control, errors, register, s
           <input
             {...register(`accounts.${index}.accountHolder`)}
             placeholder="홍길동"
-            className={inputClass}
+            className={holderError ? inputErrorClass : inputClass}
           />
+          {holderError && <p className={errorMsgClass}>{holderError}</p>}
         </div>
       </div>
     );
   };
 
-  const renderKakaoPayForm = (index: number) => (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2 px-3 py-2 bg-yellow-50 rounded-lg">
-        <span className="text-lg">💛</span>
-        <span className="text-xs text-yellow-700 font-medium">카카오페이 송금 링크를 입력해주세요</span>
-      </div>
-      <div>
-        <label className={labelClass}>카카오페이 송금 URL</label>
-        <input
-          {...register(`accounts.${index}.kakaoPayUrl`)}
-          placeholder="https://qr.kakaopay.com/..."
-          className={inputClass}
-        />
-      </div>
-      <div>
-        <label className={labelClass}>받는 분</label>
-        <input
-          {...register(`accounts.${index}.accountHolder`)}
-          placeholder="홍길동"
-          className={inputClass}
-        />
-      </div>
-    </div>
-  );
+  const renderKakaoPayForm = (index: number) => {
+    const kakaoError = getError(index, "kakaoPayUrl");
+    const holderError = getError(index, "accountHolder");
 
-  const renderTossForm = (index: number) => (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg">
-        <span className="text-lg">💙</span>
-        <span className="text-xs text-blue-700 font-medium">토스 송금 정보를 입력해주세요</span>
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 px-3 py-2 bg-warning-light rounded-lg">
+          <span className="text-lg">💛</span>
+          <span className="text-xs text-warning-text font-medium">
+            카카오페이 송금 링크를 입력해주세요
+          </span>
+        </div>
+        <div>
+          <label className={labelClass}>카카오페이 송금 URL</label>
+          <input
+            {...register(`accounts.${index}.kakaoPayUrl`)}
+            placeholder="https://qr.kakaopay.com/..."
+            className={kakaoError ? inputErrorClass : inputClass}
+          />
+          {kakaoError && <p className={errorMsgClass}>{kakaoError}</p>}
+        </div>
+        <div>
+          <label className={labelClass}>받는 분</label>
+          <input
+            {...register(`accounts.${index}.accountHolder`)}
+            placeholder="홍길동"
+            className={holderError ? inputErrorClass : inputClass}
+          />
+          {holderError && <p className={errorMsgClass}>{holderError}</p>}
+        </div>
       </div>
-      <div>
-        <label className={labelClass}>토스 ID (전화번호)</label>
-        <input
-          {...register(`accounts.${index}.tossNumber`)}
-          placeholder="010-1234-5678"
-          className={inputClass}
-        />
+    );
+  };
+
+  const renderTossForm = (index: number) => {
+    const tossError = getError(index, "tossNumber");
+    const holderError = getError(index, "accountHolder");
+
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 px-3 py-2 bg-info-light rounded-lg">
+          <span className="text-lg">💙</span>
+          <span className="text-xs text-info-text font-medium">
+            토스 송금 정보를 입력해주세요
+          </span>
+        </div>
+        <div>
+          <label className={labelClass}>토스 ID (전화번호)</label>
+          <input
+            {...register(`accounts.${index}.tossNumber`)}
+            placeholder="010-1234-5678"
+            className={tossError ? inputErrorClass : inputClass}
+          />
+          {tossError && <p className={errorMsgClass}>{tossError}</p>}
+        </div>
+        <div>
+          <label className={labelClass}>받는 분</label>
+          <input
+            {...register(`accounts.${index}.accountHolder`)}
+            placeholder="홍길동"
+            className={holderError ? inputErrorClass : inputClass}
+          />
+          {holderError && <p className={errorMsgClass}>{holderError}</p>}
+        </div>
       </div>
-      <div>
-        <label className={labelClass}>받는 분</label>
-        <input
-          {...register(`accounts.${index}.accountHolder`)}
-          placeholder="홍길동"
-          className={inputClass}
-        />
-      </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="space-y-5">
@@ -204,25 +264,43 @@ export const AccountStep: FC<AccountStepProps> = ({ control, errors, register, s
           const method = PAYMENT_METHODS.find((m) => m.value === type);
 
           return (
-            <div key={field.id} className="bg-bg-secondary rounded-xl p-4 space-y-3 relative">
+            <div
+              key={field.id}
+              className="bg-bg-secondary rounded-xl p-4 space-y-3 relative"
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <span className="text-sm">{method?.icon}</span>
-                  <span className="text-xs font-medium text-text-secondary">{method?.label}</span>
+                  <span className="text-xs font-medium text-text-secondary">
+                    {method?.label}
+                  </span>
                 </div>
                 <button
                   type="button"
                   onClick={() => remove(index)}
-                  className="p-1 text-text-secondary hover:text-red-500 transition-colors cursor-pointer"
+                  className="p-1 text-text-secondary hover:text-error transition-colors cursor-pointer"
                 >
                   <IoCloseCircleOutline size={18} />
                 </button>
               </div>
 
-              <input type="hidden" {...register(`accounts.${index}.orderIndex`)} value={index} />
-              <input type="hidden" {...register(`accounts.${index}.paymentType`)} />
-              <input type="hidden" {...register(`accounts.${index}.bankName`)} />
-              <input type="hidden" {...register(`accounts.${index}.bankCode`)} />
+              <input
+                type="hidden"
+                {...register(`accounts.${index}.orderIndex`)}
+                value={index}
+              />
+              <input
+                type="hidden"
+                {...register(`accounts.${index}.paymentType`)}
+              />
+              <input
+                type="hidden"
+                {...register(`accounts.${index}.bankName`)}
+              />
+              <input
+                type="hidden"
+                {...register(`accounts.${index}.bankCode`)}
+              />
 
               {/* 구분 */}
               <div>
@@ -232,7 +310,9 @@ export const AccountStep: FC<AccountStepProps> = ({ control, errors, register, s
                   className={inputClass}
                 >
                   {SIDE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -248,7 +328,9 @@ export const AccountStep: FC<AccountStepProps> = ({ control, errors, register, s
 
       {/* 송금 방법 추가 버튼들 */}
       <div className="space-y-2">
-        <p className="text-xs text-text-secondary font-medium">송금 방법 추가</p>
+        <p className="text-xs text-text-secondary font-medium">
+          송금 방법 추가
+        </p>
         <div className="flex gap-2 flex-wrap">
           {PAYMENT_METHODS.map((method) => (
             <button
@@ -266,4 +348,4 @@ export const AccountStep: FC<AccountStepProps> = ({ control, errors, register, s
       </div>
     </div>
   );
-}
+};

@@ -32,6 +32,7 @@ const weddingFormSchema = z.object({
     notice: z.string().optional().or(z.literal("")),
     parkingInfo: z.string().optional().or(z.literal("")),
     mealInfo: z.string().optional().or(z.literal("")),
+    greeting: z.string().max(1000).optional().or(z.literal("")),
   }),
   couples: z.array(
     z.object({
@@ -95,6 +96,7 @@ const DEFAULT_VALUES: WeddingFormData = {
     notice: "",
     parkingInfo: "",
     mealInfo: "",
+    greeting: "",
   },
   couples: [
     { role: "GROOM", name: "", email: "", contact: "", fatherName: "", isFatherAlive: true, motherName: "", isMotherAlive: true },
@@ -184,11 +186,11 @@ export const WeddingCreatePage: FC = () => {
         className="max-w-lg mx-auto p-6"
       >
         {/* 헤더 */}
-        <h1 className="text-xl font-bold text-gray-800 mb-6 text-center">초대장 만들기</h1>
+        <h1 className="text-xl font-bold text-text-primary mb-6 text-center">초대장 만들기</h1>
 
         <StepIndicator currentStep={step} onStepClick={setStep} />
 
-        <form onSubmit={handleSubmit(onSubmit)} className="bg-bg-primary rounded-2xl shadow-sm border border-border p-6">
+        <form onSubmit={(e) => e.preventDefault()} className="bg-bg-primary rounded-2xl shadow-sm border border-border p-6">
           <AnimatePresence mode="wait">
             <motion.div
               key={step}
@@ -253,8 +255,9 @@ export const WeddingCreatePage: FC = () => {
               </button>
             ) : (
               <button
-                type="submit"
+                type="button"
                 disabled={isSubmitting}
+                onClick={() => handleSubmit(onSubmit)()}
                 className="flex-1 py-3 bg-primary text-white font-medium rounded-xl hover:bg-primary-dark transition-colors disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1"
               >
                 {isSubmitting ? (

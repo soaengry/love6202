@@ -15,6 +15,7 @@ export const StepIndicator: FC<StepIndicatorProps> = ({ currentStep, onStepClick
         {STEP_LABELS.map((_, i) => (
           <div key={i} className="flex items-center gap-1">
             <button
+              type="button"
               onClick={() => {
                 if (i < currentStep && onStepClick) onStepClick(i);
               }}
@@ -24,19 +25,19 @@ export const StepIndicator: FC<StepIndicatorProps> = ({ currentStep, onStepClick
                   ? "bg-primary text-white"
                   : i < currentStep
                     ? "bg-primary/20 text-primary cursor-pointer"
-                    : "bg-gray-200 text-gray-400"
+                    : "bg-bg-tertiary text-text-tertiary"
               }`}
             >
               {i + 1}
             </button>
             {i < STEP_LABELS.length - 1 && (
-              <div className={`w-6 h-0.5 ${i < currentStep ? "bg-primary/30" : "bg-gray-200"}`} />
+              <div className={`step-connector w-6 h-0.5 ${i < currentStep ? "bg-primary/30" : "bg-bg-tertiary"}`} />
             )}
           </div>
         ))}
       </div>
       {/* 스텝 이름 */}
-      <p className="text-center text-sm text-gray-500 mt-3">{STEP_LABELS[currentStep]}</p>
+      <p className="step-label text-center text-sm text-text-secondary mt-3">{STEP_LABELS[currentStep]}</p>
     </div>
   );
 }

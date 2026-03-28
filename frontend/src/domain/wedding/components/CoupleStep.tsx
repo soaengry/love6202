@@ -10,6 +10,8 @@ interface CoupleStepProps {
   brideProfileImage: File | null;
   onGroomImageChange: (file: File | null) => void;
   onBrideImageChange: (file: File | null) => void;
+  groomPreviewUrl?: string;
+  bridePreviewUrl?: string;
 }
 
 const COUPLE_SECTIONS = [
@@ -24,6 +26,8 @@ export const CoupleStep: FC<CoupleStepProps> = ({
   brideProfileImage,
   onGroomImageChange,
   onBrideImageChange,
+  groomPreviewUrl,
+  bridePreviewUrl,
 }) => {
   return (
     <div className="space-y-6">
@@ -33,6 +37,7 @@ export const CoupleStep: FC<CoupleStepProps> = ({
         const coupleErrors = errors.couples?.[index];
         const imageFile = index === 0 ? groomProfileImage : brideProfileImage;
         const onImageChange = index === 0 ? onGroomImageChange : onBrideImageChange;
+        const previewUrl = index === 0 ? groomPreviewUrl : bridePreviewUrl;
 
         return (
           <div key={label} className="bg-bg-secondary rounded-xl p-4 space-y-4">
@@ -40,6 +45,7 @@ export const CoupleStep: FC<CoupleStepProps> = ({
               <h3 className="font-medium text-text-primary">{label} 정보</h3>
               <SingleImageUploader
                 image={imageFile}
+                previewUrl={previewUrl}
                 onChange={onImageChange}
                 label={imageLabel}
               />
@@ -51,7 +57,7 @@ export const CoupleStep: FC<CoupleStepProps> = ({
             {/* 이름 */}
             <div>
               <label className="block text-sm font-medium text-text-primary mb-1">
-                이름 <span className="text-red-500">*</span>
+                이름 <span className="text-error">*</span>
               </label>
               <input
                 {...register(`couples.${index}.name`)}
@@ -59,7 +65,7 @@ export const CoupleStep: FC<CoupleStepProps> = ({
                 className="w-full px-4 py-3 border border-border rounded-xl bg-bg-primary text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
               />
               {coupleErrors?.name && (
-                <p className="mt-1 text-sm text-red-500">{coupleErrors.name.message}</p>
+                <p className="mt-1 text-sm text-error">{coupleErrors.name.message}</p>
               )}
             </div>
 

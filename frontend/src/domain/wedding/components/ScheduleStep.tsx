@@ -66,7 +66,7 @@ export const ScheduleStep: FC<ScheduleStepProps> = ({ control, errors, register 
                 <button
                   type="button"
                   onClick={() => remove(index)}
-                  className="p-1.5 text-red-400 hover:text-red-500 transition-colors cursor-pointer"
+                  className="p-1.5 text-error hover:text-error-hover transition-colors cursor-pointer"
                 >
                   <IoTrashOutline size={16} />
                 </button>
@@ -82,7 +82,7 @@ export const ScheduleStep: FC<ScheduleStepProps> = ({ control, errors, register 
                 className="w-full px-4 py-3 border border-border rounded-xl bg-bg-primary text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
               />
               {errors.schedules?.[index]?.title && (
-                <p className="mt-1 text-sm text-red-500">{errors.schedules[index].title?.message}</p>
+                <p className="mt-1 text-sm text-error">{errors.schedules[index].title?.message}</p>
               )}
             </div>
 

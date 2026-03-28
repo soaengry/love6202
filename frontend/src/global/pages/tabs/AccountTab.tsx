@@ -28,20 +28,32 @@ const AccountCard: FC<{ account: AccountResponse }> = ({ account }) => {
     toast.success(`${label}가 복사되었습니다.`);
   };
 
+  const hasBank = !!(account.bankCode && account.bankCode !== "KAKAOPAY" && account.bankCode !== "TOSS" && account.accountNumber);
+
   return (
-    <div className="flex items-center justify-between py-3">
-      <div>
-        <p className="text-xs text-gray-400">{account.bankName}</p>
-        <p className="text-sm text-gray-700 mt-0.5">{account.accountNumber}</p>
-        <p className="text-xs text-gray-500 mt-0.5">{account.accountHolder}</p>
+    <div className="account-card flex items-center justify-between py-3">
+      <div className="account-info">
+        {hasBank && (
+          <>
+            <p className="account-bank-name text-xs text-text-tertiary">{account.bankName}</p>
+            <p className="account-number text-sm text-text-primary mt-0.5">{account.accountNumber}</p>
+          </>
+        )}
+        {!hasBank && account.kakaoPayUrl && (
+          <p className="account-type text-xs text-text-tertiary">카카오페이</p>
+        )}
+        {!hasBank && !account.kakaoPayUrl && account.tossNumber && (
+          <p className="account-type text-xs text-text-tertiary">토스</p>
+        )}
+        <p className="account-holder text-xs text-text-secondary mt-0.5">{account.accountHolder}</p>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="account-actions flex items-center gap-2">
         {account.kakaoPayUrl && (
           <a
             href={account.kakaoPayUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[11px] bg-[#FEE500] text-[#3C1E1E] px-3 py-1.5 rounded-lg font-medium hover:bg-[#FDD835] transition-colors"
+            className="kakaopay-button text-[11px] bg-[#FEE500] text-[#3C1E1E] px-3 py-1.5 rounded-lg font-medium hover:bg-[#FDD835] transition-colors"
           >
             카카오페이
           </a>
@@ -49,17 +61,19 @@ const AccountCard: FC<{ account: AccountResponse }> = ({ account }) => {
         {account.tossNumber && (
           <button
             onClick={() => handleCopy(account.tossNumber!, "토스 번호")}
-            className="text-[11px] bg-blue-500 text-white px-3 py-1.5 rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer"
+            className="toss-button text-[11px] bg-blue-500 text-white px-3 py-1.5 rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer"
           >
             토스
           </button>
         )}
-        <button
-          onClick={() => handleCopy(account.accountNumber, "계좌번호")}
-          className="p-2 text-gray-400 hover:text-primary transition-colors cursor-pointer"
-        >
-          <IoCopyOutline size={16} />
-        </button>
+        {hasBank && (
+          <button
+            onClick={() => handleCopy(account.accountNumber!, "계좌번호")}
+            className="copy-button p-2 text-text-tertiary hover:text-primary transition-colors cursor-pointer"
+          >
+            <IoCopyOutline size={16} />
+          </button>
+        )}
       </div>
     </div>
   );
@@ -70,14 +84,14 @@ const AccountGroup: FC<{ side: AccountSide; accounts: AccountResponse[] }> = ({ 
   const sorted = [...accounts].sort((a, b) => a.orderIndex - b.orderIndex);
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+    <div className="account-group bg-surface rounded-xl border border-border-light overflow-hidden">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-gray-50 transition-colors"
+        className="account-group-toggle w-full flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-surface-hover transition-colors"
       >
-        <span className="text-sm font-semibold text-gray-700">{sideLabels[side]}</span>
+        <span className="account-side-label text-sm font-semibold text-text-primary">{sideLabels[side]}</span>
         <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
-          <IoChevronDownOutline className="text-gray-400" />
+          <IoChevronDownOutline className="text-text-tertiary" />
         </motion.span>
       </button>
       <AnimatePresence>
@@ -89,7 +103,7 @@ const AccountGroup: FC<{ side: AccountSide; accounts: AccountResponse[] }> = ({ 
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="px-5 pb-4 divide-y divide-gray-50">
+            <div className="account-list px-5 pb-4 divide-y divide-border-light">
               {sorted.map((account) => (
                 <AccountCard key={account.id} account={account} />
               ))}
@@ -107,7 +121,7 @@ export const AccountTab: FC<AccountTabProps> = ({ accounts }) => {
 
   if (accounts.length === 0) {
     return (
-      <div className="text-center py-16 text-gray-400">
+      <div className="account-empty text-center py-16 text-text-tertiary">
         등록된 축의금 계좌가 없습니다.
       </div>
     );
@@ -124,7 +138,7 @@ export const AccountTab: FC<AccountTabProps> = ({ accounts }) => {
         Gift
       </p>
       <div className="text-center mb-6">
-        <p className="text-sm text-gray-500">마음을 전해주세요</p>
+        <p className="account-subtitle text-sm text-text-secondary">마음을 전해주세요</p>
       </div>
       <div className="space-y-3 max-w-sm mx-auto">
         {grouped.map(({ side, accounts }) => (

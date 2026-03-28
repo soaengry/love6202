@@ -8,6 +8,11 @@ import authRouter from "@/domain/user/auth.router";
 import userRouter from "@/domain/user/user.router";
 import weddingRouter from "@/domain/wedding/wedding.router";
 import bankRouter from "@/domain/bank/bank.router";
+import galleryRouter from "@/domain/gallery/gallery.router";
+import guestbookRouter from "@/domain/guestbook/guestbook.router";
+import uploadRouter from "@/domain/upload/upload.router";
+import adminRouter from "@/domain/admin/admin.router";
+import { ensureSession } from "@/middleware/session";
 
 const app = express();
 
@@ -18,6 +23,7 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(cookieParser());
+app.use(ensureSession);
 
 // Google OAuth2 콜백 → 프론트엔드로 code 전달
 app.get("/login/oauth2/code/google", (req, res) => {
@@ -29,6 +35,10 @@ app.use("/api/auth", authRouter);
 app.use("/api/users", userRouter);
 app.use("/api/weddings", weddingRouter);
 app.use("/api/banks", bankRouter);
+app.use("/api/galleries", galleryRouter);
+app.use("/api/guestbooks", guestbookRouter);
+app.use("/api/uploads", uploadRouter);
+app.use("/api/admin", adminRouter);
 
 app.use(errorHandler);
 

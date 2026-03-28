@@ -1,15 +1,134 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ─── Light Mode ─── */
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f9fafb;
+  --bg-tertiary: #f3f4f6;
+
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --text-tertiary: #9ca3af;
+  --text-muted: #d1d5db;
+
+  --border-default: #e5e7eb;
+  --border-light: #f3f4f6;
+
+  --surface: #ffffff;
+  --surface-hover: #f9fafb;
+
+  --error: #ef4444;
+  --error-hover: #dc2626;
+  --error-light: #fef2f2;
+
+  --info: #3b82f6;
+  --info-light: #eff6ff;
+  --info-text: #1d4ed8;
+
+  --warning-light: #fffbeb;
+  --warning-text: #92400e;
+
+  --overlay: rgba(0, 0, 0, 0.5);
+
+  --calendar-sunday: #f87171;
+  --calendar-saturday: #60a5fa;
+
+  --primary: #75bd28;
+  --primary-dark: #5a9420;
+  --primary-light: #dcf5cc;
+
+  --hero-fallback-from: #f5ede4;
+  --hero-fallback-to: #e8ddd0;
+}
+
+/* ─── Dark Mode ─── */
+.dark {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-tertiary: #64748b;
+  --text-muted: #475569;
+
+  --border-default: #334155;
+  --border-light: #1e293b;
+
+  --surface: #1e293b;
+  --surface-hover: #334155;
+
+  --error: #f87171;
+  --error-hover: #ef4444;
+  --error-light: #450a0a;
+
+  --info: #60a5fa;
+  --info-light: #172554;
+  --info-text: #93bbfd;
+
+  --warning-light: #451a03;
+  --warning-text: #fde68a;
+
+  --overlay: rgba(0, 0, 0, 0.7);
+
+  --calendar-sunday: #fca5a5;
+  --calendar-saturday: #93c5fd;
+
+  --primary: #6CB3E1;
+  --primary-dark: #5a9bc5;
+  --primary-light: #1a3a52;
+
+  --hero-fallback-from: #1e293b;
+  --hero-fallback-to: #0f172a;
+}
+
 @theme {
   --font-sans: "Pretendard Variable", Pretendard, system-ui, sans-serif;
-  --color-primary: #75bd28;
-  --color-primary-dark: #5a9420;
-  --color-highlight: #f5a623;
-  --color-bg-primary: #ffffff;
-  --color-bg-secondary: #f9fafb;
-  --color-text-primary: #111827;
-  --color-text-secondary: #6b7280;
-  --color-border: #e5e7eb;
+
+  /* Primary */
+  --color-primary: var(--primary);
+  --color-primary-dark: var(--primary-dark);
+  --color-primary-light: var(--primary-light);
+
+  /* Highlight */
+  --color-highlight: #ffd700;
+  --color-highlight-dark: #e6c200;
+
+  /* Background */
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-tertiary: var(--bg-tertiary);
+
+  /* Text */
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-text-muted: var(--text-muted);
+
+  /* Border */
+  --color-border: var(--border-default);
+  --color-border-light: var(--border-light);
+
+  /* Surface */
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+
+  /* Semantic */
+  --color-error: var(--error);
+  --color-error-hover: var(--error-hover);
+  --color-error-light: var(--error-light);
+  --color-info: var(--info);
+  --color-info-light: var(--info-light);
+  --color-info-text: var(--info-text);
+  --color-warning-light: var(--warning-light);
+  --color-warning-text: var(--warning-text);
+  --color-overlay: var(--overlay);
+
+  /* Calendar */
+  --color-calendar-sunday: var(--calendar-sunday);
+  --color-calendar-saturday: var(--calendar-saturday);
 }
 
 @font-face {
@@ -24,8 +143,23 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 #root {
   min-height: 100svh;
+}
+
+/* ─── Gallery Image Protection ─── */
+.gallery-image {
+  user-select: none;
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+  pointer-events: none;
+}
+
+.image-protect {
+  user-select: none;
+  -webkit-touch-callout: none;
 }

@@ -22,7 +22,7 @@ model User {
   providerId      String?   @db.VarChar(255)
   tokenVersion    Int       @default(0)
   version         Int       @default(0)
-  weddingId       Int?      @unique
+  weddingId       Int?
   deletedAt       DateTime? @db.Timestamptz
   createdAt       DateTime  @default(now()) @db.Timestamptz
   updatedAt       DateTime  @updatedAt @db.Timestamptz
@@ -31,6 +31,7 @@ model User {
 
   @@index([email])
   @@index([providerId])
+  @@index([weddingId])
   @@map("users")
 }
 
@@ -89,6 +90,7 @@ model Wedding {
   notice       String?   @db.Text
   parkingInfo  String?   @db.Text
   mealInfo     String?   @db.Text
+  greeting     String?   @db.Text
   version      Int       @default(0)
   deletedAt    DateTime? @db.Timestamptz
   createdAt    DateTime  @default(now()) @db.Timestamptz
@@ -101,6 +103,9 @@ model Wedding {
   schedules       Schedule[]
   transportations Transportation[]
   announcements   Announcement[]
+  galleries       Gallery[]
+  guestbooks      Guestbook[]
+  uploads         Upload[]
 
   @@map("weddings")
 }
@@ -141,9 +146,9 @@ model Account {
   id            Int         @id @default(autoincrement())
   weddingId     Int
   side          AccountSide
-  bankName      String      @db.VarChar(100)
-  bankCode      String      @db.VarChar(10)
-  accountNumber String      @db.VarChar(50)
+  bankName      String?     @db.VarChar(100)
+  bankCode      String?     @db.VarChar(10)
+  accountNumber String?     @db.VarChar(50)
   accountHolder String      @db.VarChar(50)
   kakaoPayUrl   String?     @db.VarChar(500)
   tossNumber    String?     @db.VarChar(50)
@@ -191,4 +196,49 @@ model Announcement {
   wedding Wedding @relation(fields: [weddingId], references: [id], onDelete: Cascade)
 
   @@map("announcements")
+}
+
+model Gallery {
+  id           Int      @id @default(autoincrement())
+  weddingId    Int
+  imageUrl     String   @db.VarChar(500)
+  thumbnailUrl String?  @db.VarChar(500)
+  caption      String?  @db.VarChar(255)
+  orderIndex   Int
+  createdAt    DateTime @default(now()) @db.Timestamptz
+
+  wedding Wedding @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+
+  @@map("galleries")
+}
+
+model Upload {
+  id          Int      @id @default(autoincrement())
+  weddingId   Int
+  sessionId   String   @db.VarChar(36)
+  userId      Int?
+  driveFileId String   @db.VarChar(255)
+  imageUrl    String   @db.VarChar(500)
+  createdAt   DateTime @default(now()) @db.Timestamptz
+
+  wedding Wedding @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+
+  @@index([weddingId])
+  @@index([sessionId])
+  @@index([userId])
+  @@map("uploads")
+}
+
+model Guestbook {
+  id        Int      @id @default(autoincrement())
+  weddingId Int
+  name      String   @db.VarChar(50)
+  content   String   @db.VarChar(200)
+  type      String   @db.VarChar(20)
+  rotation  Float    @default(0)
+  createdAt DateTime @default(now()) @db.Timestamptz
+
+  wedding Wedding @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+
+  @@map("guestbooks")
 }

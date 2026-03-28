@@ -26,6 +26,13 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
+export function requireAdminOrHost(req: Request, res: Response, next: NextFunction) {
+  if (req.userRole !== "ADMIN" && req.userRole !== "HOST") {
+    return res.status(403).json(apiResponse.error(403, "FORBIDDEN"));
+  }
+  next();
+}
+
 // 인증 선택적
 export function optionalAuth(req: Request, res: Response, next: NextFunction) {
   const token = req.cookies?.[COOKIE_NAMES.ACCESS_TOKEN];

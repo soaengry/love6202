@@ -13,14 +13,19 @@ const coupleSchema = z.object({
 
 const accountSchema = z.object({
   side: z.enum(["GROOM", "GROOM_FAMILY", "BRIDE", "BRIDE_FAMILY"]),
-  bankName: z.string().min(1).max(100),
-  bankCode: z.string().min(1).max(10),
-  accountNumber: z.string().min(1).max(50),
+  bankName: z.string().max(100).optional().or(z.literal("")),
+  bankCode: z.string().max(10).optional().or(z.literal("")),
+  accountNumber: z.string().max(50).optional().or(z.literal("")),
   accountHolder: z.string().min(1).max(50),
   kakaoPayUrl: z.string().url().max(500).optional().or(z.literal("")),
   tossNumber: z.string().max(50).optional().or(z.literal("")),
   orderIndex: z.number().int().min(0),
-});
+}).refine((data) => {
+  const hasBank = !!(data.bankName && data.bankCode && data.accountNumber);
+  const hasKakao = !!(data.kakaoPayUrl);
+  const hasToss = !!(data.tossNumber);
+  return hasBank || hasKakao || hasToss;
+}, { message: "은행계좌, 카카오페이, 토스 중 최소 1개를 입력해주세요." });
 
 const scheduleSchema = z.object({
   title: z.string().min(1).max(255),
@@ -52,6 +57,7 @@ export const createWeddingBodySchema = z.object({
     notice: z.string().optional().or(z.literal("")),
     parkingInfo: z.string().optional().or(z.literal("")),
     mealInfo: z.string().optional().or(z.literal("")),
+    greeting: z.string().optional().or(z.literal("")),
   }),
   couples: z.array(coupleSchema).min(1).max(2),
   accounts: z.array(accountSchema).default([]),
@@ -62,7 +68,9 @@ export const createWeddingBodySchema = z.object({
 
 export type CreateWeddingBody = z.infer<typeof createWeddingBodySchema>;
 
-export const updateWeddingBodySchema = createWeddingBodySchema;
+export const updateWeddingBodySchema = createWeddingBodySchema.extend({
+  existingHeroImageUrls: z.array(z.string().url()).default([]),
+});
 export type UpdateWeddingBody = z.infer<typeof updateWeddingBodySchema>;
 
 export const weddingIdParamSchema = z.object({

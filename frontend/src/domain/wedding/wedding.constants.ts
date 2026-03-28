@@ -1,6 +1,7 @@
 export const WEDDING_API = {
   BASE: "/weddings",
   ME: "/weddings/me",
+  LATEST: "/weddings/latest",
   DETAIL: (id: number) => `/weddings/${id}`,
 } as const;
 

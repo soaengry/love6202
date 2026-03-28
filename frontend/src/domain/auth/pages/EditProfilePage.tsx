@@ -155,7 +155,7 @@ export const EditProfilePage: FC = () => {
               />
 
               {isSubmitting && (
-                <div className="profile-image-loading absolute inset-0 flex items-center justify-center rounded-full bg-black/40">
+                <div className="profile-image-loading absolute inset-0 flex items-center justify-center rounded-full bg-overlay">
                   <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 </div>
               )}
@@ -164,7 +164,7 @@ export const EditProfilePage: FC = () => {
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="profile-image-change absolute bottom-0 left-0 right-0 h-[20%] flex items-center justify-center rounded-b-full bg-black/50 text-white text-xs font-medium cursor-pointer"
+                  className="profile-image-change absolute bottom-0 left-0 right-0 h-[20%] flex items-center justify-center rounded-b-full bg-overlay text-white text-xs font-medium cursor-pointer"
                 >
                   변경
                 </button>
@@ -190,7 +190,7 @@ export const EditProfilePage: FC = () => {
             />
 
             <p className="profile-image-hint text-xs text-text-secondary">JPG, PNG / 최대 2MB</p>
-            {imageError && <p className="profile-image-error text-xs text-red-500">{imageError}</p>}
+            {imageError && <p className="profile-image-error text-xs text-error">{imageError}</p>}
           </div>
 
           {/* 닉네임 */}
@@ -208,7 +208,7 @@ export const EditProfilePage: FC = () => {
               placeholder="닉네임을 입력하세요 (2~50자)"
             />
             {isNicknameEmpty && (
-              <p className="nickname-error mt-1 text-sm text-red-500">닉네임을 입력해주세요.</p>
+              <p className="nickname-error mt-1 text-sm text-error">닉네임을 입력해주세요.</p>
             )}
             {nicknameStatus === "checking" && (
               <p className="nickname-status mt-1 text-sm text-text-secondary">확인 중...</p>
@@ -217,7 +217,7 @@ export const EditProfilePage: FC = () => {
               <p className="nickname-status mt-1 text-sm text-primary">사용 가능한 닉네임입니다.</p>
             )}
             {nicknameStatus === "taken" && (
-              <p className="nickname-status mt-1 text-sm text-red-500">이미 사용 중인 닉네임입니다.</p>
+              <p className="nickname-status mt-1 text-sm text-error">이미 사용 중인 닉네임입니다.</p>
             )}
           </div>
 

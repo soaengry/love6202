@@ -6,6 +6,7 @@ const isProduction = env.NODE_ENV === "production";
 export const COOKIE_NAMES = {
   ACCESS_TOKEN: "access_token",
   REFRESH_TOKEN: "refresh_token",
+  SESSION_ID: "session_id",
 } as const;
 
 const commonOptions = {

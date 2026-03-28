@@ -26,6 +26,9 @@ const envSchema = z.object({
   FRONTEND_URL: z.string().default("http://localhost:3000"),
 
   KAKAO_REST_API_KEY: z.string().optional(),
+
+  GOOGLE_DRIVE_REFRESH_TOKEN: z.string().optional(),
+  GOOGLE_DRIVE_ROOT_FOLDER_ID: z.string().optional(),
 });
 
 export const env = envSchema.parse(process.env);
