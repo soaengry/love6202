@@ -95,7 +95,7 @@ router.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { weddingId } = rsvpQuerySchema.parse(req.query);
-      const result = await rsvpService.getRsvpStats(weddingId);
+      const result = await rsvpService.getRsvpStats(weddingId, req.userId!, req.userRole!);
       res.json(apiResponse.ok("참석 통계 조회 성공", result));
     } catch (err) {
       next(err);
@@ -111,7 +111,7 @@ router.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { weddingId, page, size } = rsvpListQuerySchema.parse(req.query);
-      const result = await rsvpService.listRsvps(weddingId, page, size);
+      const result = await rsvpService.listRsvps(weddingId, page, size, req.userId!, req.userRole!);
       res.json(apiResponse.ok("참석 의향서 목록 조회 성공", result));
     } catch (err) {
       next(err);
@@ -127,7 +127,7 @@ router.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { weddingId } = rsvpQuerySchema.parse(req.query);
-      const csv = await rsvpService.exportRsvpCsv(weddingId);
+      const csv = await rsvpService.exportRsvpCsv(weddingId, req.userId!, req.userRole!);
       res.setHeader("Content-Type", "text/csv; charset=utf-8");
       res.setHeader(
         "Content-Disposition",

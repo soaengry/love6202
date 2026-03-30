@@ -244,6 +244,20 @@ model Guestbook {
   @@map("guestbooks")
 }
 
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  actorId    Int
+  action     String   @db.VarChar(50)
+  targetType String   @db.VarChar(50)
+  targetId   Int?
+  meta       Json?
+  createdAt  DateTime @default(now()) @db.Timestamptz
+
+  @@index([actorId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
 model Rsvp {
   id            Int      @id @default(autoincrement())
   weddingId     Int

@@ -16,6 +16,19 @@ async function assertWeddingExists(weddingId: number) {
   return wedding;
 }
 
+// ADMIN은 모든 웨딩 접근 가능, HOST는 자신이 소유한 웨딩만 접근 가능
+async function assertHostOwnsWedding(
+  userId: number,
+  userRole: string,
+  weddingId: number,
+): Promise<void> {
+  if (userRole === "ADMIN") return;
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user || user.weddingId !== weddingId) {
+    throw AppError.from(RsvpErrorCode.RSVP_UNAUTHORIZED);
+  }
+}
+
 // ─── Create ──────────────────────────────────────────────
 
 export async function createRsvp(
@@ -174,7 +187,12 @@ export async function deleteRsvp(
 
 // ─── Stats (Admin/Host) ───────────────────────────────────
 
-export async function getRsvpStats(weddingId: number): Promise<RsvpStatsResponse> {
+export async function getRsvpStats(
+  weddingId: number,
+  userId: number,
+  userRole: string,
+): Promise<RsvpStatsResponse> {
+  await assertHostOwnsWedding(userId, userRole, weddingId);
   const attending = await prisma.rsvp.findMany({
     where: { weddingId, attendance: "YES" },
     select: { attendeeCount: true, willEat: true, mealCount: true, willRide: true, rideCount: true },
@@ -195,7 +213,10 @@ export async function listRsvps(
   weddingId: number,
   page: number,
   size: number,
+  userId: number,
+  userRole: string,
 ): Promise<RsvpListResponse> {
+  await assertHostOwnsWedding(userId, userRole, weddingId);
   const { skip, take } = paginate({ page, size });
 
   const [items, totalCount] = await Promise.all([
@@ -217,9 +238,22 @@ export async function listRsvps(
   };
 }
 
+// ─── CSV Helpers ─────────────────────────────────────────
+
+// Excel 수식 인젝션 방어: =, +, -, @, 탭, 개행으로 시작하는 값에 ' 접두사 추가
+function escapeCsvValue(value: string): string {
+  return /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
+}
+
 // ─── Export CSV (Admin/Host) ──────────────────────────────
 
-export async function exportRsvpCsv(weddingId: number): Promise<string> {
+export async function exportRsvpCsv(
+  weddingId: number,
+  userId: number,
+  userRole: string,
+): Promise<string> {
+  await assertHostOwnsWedding(userId, userRole, weddingId);
+
   const items = await prisma.rsvp.findMany({
     where: { weddingId },
     orderBy: { createdAt: "asc" },
@@ -234,15 +268,15 @@ export async function exportRsvpCsv(weddingId: number): Promise<string> {
   const rows = items.map((r) => [
     r.id,
     r.attendance === "YES" ? "참석" : "불참",
-    `"${r.name}"`,
+    `"${escapeCsvValue(r.name).replace(/"/g, '""')}"`,
     r.side === "BRIDE" ? "신부측" : "신랑측",
-    r.phone,
+    `"${escapeCsvValue(r.phone).replace(/"/g, '""')}"`,
     r.attendeeCount,
     r.willEat ? "예" : "아니오",
     r.mealCount,
     r.willRide ? "예" : "아니오",
     r.rideCount,
-    `"${(r.note ?? "").replace(/"/g, '""')}"`,
+    `"${escapeCsvValue(r.note ?? "").replace(/"/g, '""')}"`,
     r.createdAt.toISOString(),
   ].join(","));
 

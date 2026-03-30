@@ -1,8 +1,10 @@
 import axios from "axios";
 import prisma from "@/prisma";
+import redis from "@/config/redis";
 import { env } from "@/config/env";
 import { generateAccessToken, generateRefreshToken, verifyToken } from "@/util/jwt";
 import * as refreshTokenService from "@/service/refreshToken.service";
+import { sendNewDeviceLoginAlert } from "@/service/email.service";
 import { generateNickname } from "@/util/nickname";
 import { AppError } from "@/util/appError";
 import { UserErrorCode } from "./user.error";
@@ -94,6 +96,14 @@ export async function googleLogin(
   const accessToken = generateAccessToken(user);
   const refreshToken = generateRefreshToken(user.id, deviceId, user.tokenVersion);
   await refreshTokenService.save(user.id, deviceId, refreshToken);
+
+  // 새 기기 감지 → 이메일 알림 (fire-and-forget)
+  const knownDeviceKey = `known_devices:${user.id}`;
+  const isNewDevice = !(await redis.sismember(knownDeviceKey, deviceId));
+  if (isNewDevice) {
+    await redis.sadd(knownDeviceKey, deviceId);
+    sendNewDeviceLoginAlert(user.email, deviceId).catch(() => {/* 이메일 실패는 로그인 차단하지 않음 */});
+  }
 
   return { accessToken, refreshToken, user: toUserResponse(user) };
 }

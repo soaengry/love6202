@@ -1,18 +1,16 @@
 import redis from "@/config/redis";
-import crypto from "crypto";
+import bcrypt from "bcryptjs";
 
 const TTL = 1 * 24 * 60 * 60; // 1일 (초)
-
-function hashToken(token: string): string {
-  return crypto.createHash("sha256").update(token).digest("hex");
-}
+const BCRYPT_ROUNDS = 10;
 
 function key(userId: number, deviceId: string) {
   return `refresh:${userId}:${deviceId}`;
 }
 
 export async function save(userId: number, deviceId: string, token: string) {
-  await redis.setex(key(userId, deviceId), TTL, hashToken(token));
+  const hashed = await bcrypt.hash(token, BCRYPT_ROUNDS);
+  await redis.setex(key(userId, deviceId), TTL, hashed);
 }
 
 export async function verify(
@@ -21,7 +19,8 @@ export async function verify(
   token: string,
 ): Promise<boolean> {
   const stored = await redis.get(key(userId, deviceId));
-  return stored === hashToken(token);
+  if (!stored) return false;
+  return bcrypt.compare(token, stored);
 }
 
 export async function deleteByDevice(userId: number, deviceId: string) {
