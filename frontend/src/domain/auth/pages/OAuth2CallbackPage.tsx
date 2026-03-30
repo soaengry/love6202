@@ -29,7 +29,7 @@ export const OAuth2CallbackPage: FC = () => {
         navigate("/", { replace: true });
       } catch {
         toast.error("로그인에 실패했습니다. 다시 시도해주세요.");
-        navigate("/login", { replace: true });
+        navigate("/", { replace: true });
       }
     };
 

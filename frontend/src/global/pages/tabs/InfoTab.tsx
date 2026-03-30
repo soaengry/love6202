@@ -4,9 +4,14 @@ import {
   IoCallOutline,
   IoNavigateOutline,
   IoCopyOutline,
+  IoChevronDownOutline,
 } from "react-icons/io5";
 import { toast } from "react-toastify";
-import type { WeddingDetailResponse } from "@/domain/wedding/types.ts";
+import type {
+  WeddingDetailResponse,
+  AccountResponse,
+  AccountSide,
+} from "@/domain/wedding/types.ts";
 import { ENV } from "@/global/config/env.ts";
 
 interface InfoTabProps {
@@ -138,7 +143,7 @@ const LandingSection: FC<InfoTabProps> = ({ data }) => {
               {
                 left: `${8 + ((i * 7.5) % 85)}%`,
                 "--size": `${3 + (i % 4) * 2}px`,
-                "--duration": `${6 + (i % 5) * 2}s`,
+                "--duration": `${6 + (i % 5) * 3}s`,
                 "--delay": `${(i * 1.3) % 8}s`,
               } as React.CSSProperties
             }
@@ -579,6 +584,162 @@ const InformationSection: FC<InfoTabProps> = ({ data }) => {
   );
 };
 
+// ─── Gift Section (축의금) ───
+const giftSideLabels: Record<AccountSide, string> = {
+  GROOM: "신랑측",
+  GROOM_FAMILY: "신랑측 가족",
+  BRIDE: "신부측",
+  BRIDE_FAMILY: "신부측 가족",
+};
+
+const giftSideOrder: AccountSide[] = [
+  "GROOM",
+  "GROOM_FAMILY",
+  "BRIDE",
+  "BRIDE_FAMILY",
+];
+
+const GiftAccountCard: FC<{ account: AccountResponse }> = ({ account }) => {
+  const handleCopy = async (text: string, label: string) => {
+    await navigator.clipboard.writeText(text);
+    toast.success(`${label}가 복사되었습니다.`);
+  };
+
+  const hasBank = !!(
+    account.bankCode &&
+    account.bankCode !== "KAKAOPAY" &&
+    account.bankCode !== "TOSS" &&
+    account.accountNumber
+  );
+
+  return (
+    <div className="gift-account-card flex items-center justify-between py-3">
+      <div className="gift-account-info">
+        {hasBank && (
+          <>
+            <p className="gift-bank-name text-xs text-text-tertiary">
+              {account.bankName}
+            </p>
+            <p className="gift-account-number text-sm text-text-primary mt-0.5">
+              {account.accountNumber}
+            </p>
+          </>
+        )}
+        {!hasBank && account.kakaoPayUrl && (
+          <p className="gift-account-type text-xs text-text-tertiary">
+            카카오페이
+          </p>
+        )}
+        {!hasBank && !account.kakaoPayUrl && account.tossNumber && (
+          <p className="gift-account-type text-xs text-text-tertiary">토스</p>
+        )}
+        <p className="gift-account-holder text-xs text-text-secondary mt-0.5">
+          {account.accountHolder}
+        </p>
+      </div>
+      <div className="gift-account-actions flex items-center gap-2">
+        {account.kakaoPayUrl && (
+          <a
+            href={account.kakaoPayUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="kakaopay-btn text-[11px] bg-[#FEE500] text-[#3C1E1E] px-3 py-1.5 rounded-lg font-medium hover:bg-[#FDD835] transition-colors"
+          >
+            카카오페이
+          </a>
+        )}
+        {account.tossNumber && (
+          <button
+            onClick={() => handleCopy(account.tossNumber!, "토스 번호")}
+            className="toss-btn text-[11px] bg-blue-500 text-white px-3 py-1.5 rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer"
+          >
+            토스
+          </button>
+        )}
+        {hasBank && (
+          <button
+            onClick={() => handleCopy(account.accountNumber!, "계좌번호")}
+            className="copy-btn p-2 text-text-tertiary hover:text-primary transition-colors cursor-pointer"
+          >
+            <IoCopyOutline size={16} />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const GiftAccountGroup: FC<{
+  side: AccountSide;
+  accounts: AccountResponse[];
+}> = ({ side, accounts }) => {
+  const [open, setOpen] = useState(false);
+  const sorted = [...accounts].sort((a, b) => a.orderIndex - b.orderIndex);
+
+  return (
+    <div className="gift-account-group bg-surface rounded-xl border border-border-light overflow-hidden">
+      <button
+        onClick={() => setOpen(!open)}
+        className="gift-group-toggle w-full flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-surface-hover transition-colors"
+      >
+        <span className="gift-side-label text-sm font-semibold text-text-primary">
+          {giftSideLabels[side]}
+        </span>
+        <motion.span
+          animate={{ rotate: open ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <IoChevronDownOutline className="text-text-tertiary" />
+        </motion.span>
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="gift-account-list px-5 pb-4 divide-y divide-border-light">
+              {sorted.map((account) => (
+                <GiftAccountCard key={account.id} account={account} />
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+const GiftSection: FC<{ accounts: AccountResponse[] }> = ({ accounts }) => {
+  if (accounts.length === 0) return null;
+
+  const grouped = giftSideOrder
+    .map((side) => ({
+      side,
+      accounts: accounts.filter((a) => a.side === side),
+    }))
+    .filter((g) => g.accounts.length > 0);
+
+  return (
+    <AnimatedSection className="py-10 px-6">
+      <SectionLabel text="Gift" />
+      <div className="text-center mb-6">
+        <p className="gift-subtitle text-sm text-text-secondary">
+          마음을 전해주세요
+        </p>
+      </div>
+      <div className="space-y-3 max-w-sm mx-auto">
+        {grouped.map(({ side, accounts }) => (
+          <GiftAccountGroup key={side} side={side} accounts={accounts} />
+        ))}
+      </div>
+    </AnimatedSection>
+  );
+};
+
 // ─── Main InfoTab ───
 export const InfoTab: FC<InfoTabProps> = ({ data }) => {
   return (
@@ -591,6 +752,7 @@ export const InfoTab: FC<InfoTabProps> = ({ data }) => {
       <LocationSection wedding={data.wedding} />
       <ScheduleSection schedules={data.schedules} />
       <InformationSection data={data} />
+      <GiftSection accounts={data.accounts} />
 
       <div className="flex items-center justify-center gap-3 py-4">
         <div className="w-16 h-px bg-primary/10" />
