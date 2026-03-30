@@ -7,18 +7,18 @@ APP_DIR=/home/ubuntu/app
 COMPOSE_FILE="$APP_DIR/docker/docker-compose.dev.yml"
 
 IMAGE_TAG=${IMAGE_TAG:?IMAGE_TAG is required}
-GITHUB_REPOSITORY=${GITHUB_REPOSITORY:?GITHUB_REPOSITORY is required}
+DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME:?DOCKERHUB_USERNAME is required}
 
 echo "==> Deploying dev backend (tag=$IMAGE_TAG)"
 
 # Pull new image
-echo "==> Pulling image ghcr.io/${GITHUB_REPOSITORY}/backend:${IMAGE_TAG}"
-IMAGE_TAG="$IMAGE_TAG" GITHUB_REPOSITORY="$GITHUB_REPOSITORY" \
+echo "==> Pulling image ${DOCKERHUB_USERNAME}/love6202-backend:${IMAGE_TAG}"
+IMAGE_TAG="$IMAGE_TAG" DOCKERHUB_USERNAME="$DOCKERHUB_USERNAME" \
     docker compose -f "$COMPOSE_FILE" pull backend
 
 # Restart backend with new image
 echo "==> Restarting love6202-backend-dev"
-IMAGE_TAG="$IMAGE_TAG" GITHUB_REPOSITORY="$GITHUB_REPOSITORY" \
+IMAGE_TAG="$IMAGE_TAG" DOCKERHUB_USERNAME="$DOCKERHUB_USERNAME" \
     docker compose -f "$COMPOSE_FILE" up -d --no-deps backend
 
 # Health check

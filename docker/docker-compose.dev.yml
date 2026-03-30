@@ -1,6 +1,6 @@
 services:
   backend:
-    image: ghcr.io/${GITHUB_REPOSITORY}/backend:${IMAGE_TAG:-dev-latest}
+    image: ${DOCKERHUB_USERNAME}/love6202-backend:${IMAGE_TAG:-dev-latest}
     container_name: love6202-backend-dev
     restart: unless-stopped
     env_file: /home/ubuntu/app/.env.dev

@@ -10,7 +10,7 @@ INFRA_FILE="$APP_DIR/docker/docker-compose.infra.yml"
 UPSTREAM_CONF="$APP_DIR/nginx/upstream.conf"
 
 IMAGE_TAG=${IMAGE_TAG:?IMAGE_TAG is required}
-GITHUB_REPOSITORY=${GITHUB_REPOSITORY:?GITHUB_REPOSITORY is required}
+DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME:?DOCKERHUB_USERNAME is required}
 
 # ── Determine active/new color ─────────────────────────────────────────────
 ACTIVE_COLOR=$(cat "$ACTIVE_FILE" 2>/dev/null || echo "blue")
@@ -26,13 +26,13 @@ NEW_CONTAINER="love6202-backend-${NEW_COLOR}"
 echo "==> Deploying: active=$ACTIVE_COLOR → new=$NEW_COLOR (tag=$IMAGE_TAG)"
 
 # ── Pull new image ──────────────────────────────────────────────────────────
-echo "==> Pulling image ghcr.io/${GITHUB_REPOSITORY}/backend:${IMAGE_TAG}"
-IMAGE_TAG="$IMAGE_TAG" GITHUB_REPOSITORY="$GITHUB_REPOSITORY" \
+echo "==> Pulling image ${DOCKERHUB_USERNAME}/love6202-backend:${IMAGE_TAG}"
+IMAGE_TAG="$IMAGE_TAG" DOCKERHUB_USERNAME="$DOCKERHUB_USERNAME" \
     docker compose -f "$INFRA_FILE" -f "$COMPOSE_FILE" pull "backend-${NEW_COLOR}"
 
 # ── Start new container ─────────────────────────────────────────────────────
 echo "==> Starting $NEW_CONTAINER"
-IMAGE_TAG="$IMAGE_TAG" GITHUB_REPOSITORY="$GITHUB_REPOSITORY" \
+IMAGE_TAG="$IMAGE_TAG" DOCKERHUB_USERNAME="$DOCKERHUB_USERNAME" \
     docker compose -f "$INFRA_FILE" -f "$COMPOSE_FILE" up -d "backend-${NEW_COLOR}"
 
 # ── Health check ────────────────────────────────────────────────────────────

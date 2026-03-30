@@ -1,6 +1,6 @@
 services:
   backend-blue:
-    image: ghcr.io/${GITHUB_REPOSITORY}/backend:${IMAGE_TAG:-prod-latest}
+    image: ${DOCKERHUB_USERNAME}/love6202-backend:${IMAGE_TAG:-prod-latest}
     container_name: love6202-backend-blue
     restart: unless-stopped
     env_file: /home/ubuntu/app/.env.prod
@@ -18,7 +18,7 @@ services:
           memory: 256M
 
   backend-green:
-    image: ghcr.io/${GITHUB_REPOSITORY}/backend:${IMAGE_TAG:-prod-latest}
+    image: ${DOCKERHUB_USERNAME}/love6202-backend:${IMAGE_TAG:-prod-latest}
     container_name: love6202-backend-green
     restart: unless-stopped
     env_file: /home/ubuntu/app/.env.prod

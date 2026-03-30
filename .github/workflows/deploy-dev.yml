@@ -6,8 +6,7 @@ on:
       - dev
 
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/backend
+  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/love6202-backend
 
 jobs:
   build-and-push:
@@ -15,7 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write
 
     outputs:
       image_tag: ${{ steps.meta.outputs.version }}
@@ -24,18 +22,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Log in to GHCR
+      - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.IMAGE_NAME }}
           tags: |
             type=sha,prefix=dev-,format=short
             type=raw,value=dev-latest
@@ -82,13 +79,13 @@ jobs:
             cp -r /home/ubuntu/app-deploy-tmp/docker/*  /home/ubuntu/app/docker/
             chmod +x /home/ubuntu/app/scripts/*.sh
 
-            # Log in to GHCR
-            echo "${{ secrets.GITHUB_TOKEN }}" | \
-              docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            # Log in to DockerHub
+            echo "${{ secrets.DOCKERHUB_TOKEN }}" | \
+              docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
 
             # Run simple rolling deploy
             IMAGE_TAG="${{ needs.build-and-push.outputs.image_tag }}" \
-            GITHUB_REPOSITORY="${{ github.repository }}" \
+            DOCKERHUB_USERNAME="${{ secrets.DOCKERHUB_USERNAME }}" \
               /home/ubuntu/app/scripts/deploy-dev.sh
 
             # Cleanup tmp
