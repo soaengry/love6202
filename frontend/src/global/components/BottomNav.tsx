@@ -4,8 +4,8 @@ import { useAuthStore } from "@/domain/auth/store/useAuthStore.ts";
 import {
   IoHeartCircleOutline,
   IoHeartCircle,
-  IoGiftOutline,
-  IoGift,
+  IoTodayOutline,
+  IoToday,
   IoFootstepsOutline,
   IoFootsteps,
   IoImagesOutline,
@@ -16,7 +16,7 @@ import {
   IoPerson,
 } from "react-icons/io5";
 
-export type TabId = "info" | "account" | "guestbook" | "gallery" | "upload";
+export type TabId = "info" | "rsvp" | "guestbook" | "gallery" | "upload";
 
 interface BottomNavProps {
   activeTab: TabId;
@@ -31,10 +31,10 @@ const tabs = [
     activeIcon: IoHeartCircle,
   },
   {
-    id: "account" as TabId,
-    label: "축의금",
-    icon: IoGiftOutline,
-    activeIcon: IoGift,
+    id: "rsvp" as TabId,
+    label: "참석여부",
+    icon: IoTodayOutline,
+    activeIcon: IoToday,
   },
   {
     id: "guestbook" as TabId,

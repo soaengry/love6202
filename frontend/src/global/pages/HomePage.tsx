@@ -7,7 +7,7 @@ import { weddingApi } from "@/domain/wedding/api/weddingApi.ts";
 import type { WeddingDetailResponse } from "@/domain/wedding/types.ts";
 import type { TabId } from "@/global/components/BottomNav.tsx";
 import { InfoTab } from "./tabs/InfoTab.tsx";
-import { AccountTab } from "./tabs/AccountTab.tsx";
+import { RsvpTab } from "./tabs/RsvpTab.tsx";
 import { GuestbookTab } from "./tabs/GuestbookTab.tsx";
 import { GalleryTab } from "./tabs/GalleryTab.tsx";
 import { UploadTab } from "./tabs/UploadTab.tsx";
@@ -85,8 +85,8 @@ export const HomePage: FC = () => {
     switch (activeTab) {
       case "info":
         return <InfoTab data={wedding} />;
-      case "account":
-        return <AccountTab accounts={wedding.accounts} />;
+      case "rsvp":
+        return <RsvpTab weddingId={wedding.wedding.id} />;
       case "guestbook":
         return <GuestbookTab weddingId={wedding.wedding.id} setActiveTab={setActiveTab} />;
       case "gallery":
