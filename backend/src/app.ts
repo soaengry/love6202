@@ -27,6 +27,11 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(ensureSession);
 
+// Health check
+app.get("/health", (_req, res) => {
+  res.json({ status: "ok", uptime: Math.floor(process.uptime()) });
+});
+
 // Google OAuth2 콜백 → 프론트엔드로 code 전달
 app.get("/login/oauth2/code/google", (req, res) => {
   const code = req.query.code as string;
