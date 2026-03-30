@@ -413,19 +413,9 @@ async function syncCoupleHosts(
   oldEmails: string[],
   creatorUserId: number,
 ): Promise<void> {
-  // 부여: 새 couple 이메일에 해당하는 유저 → HOST + weddingId 연결 (배치)
-  if (newEmails.length > 0) {
-    const usersToGrant = await tx.user.findMany({
-      where: { email: { in: newEmails }, deletedAt: null, id: { not: creatorUserId }, role: { not: "ADMIN" } },
-      select: { id: true },
-    });
-    if (usersToGrant.length > 0) {
-      await tx.user.updateMany({
-        where: { id: { in: usersToGrant.map((u) => u.id) } },
-        data: { weddingId, role: "HOST" },
-      });
-    }
-  }
+  // [SECURITY] 커플 이메일 일치 유저에게 HOST 권한 자동 부여 제거
+  // → 권한 부여는 별도 초대/수락 플로우에서만 처리해야 함
+  // → 자동 부여 시 공격자가 자신의 이메일을 커플로 등록해 HOST 탈취 가능
 
   // 해제: 제거된 couple 이메일의 유저 → GUEST + weddingId 해제 (배치)
   const removedEmails = oldEmails.filter((e) => !newEmails.includes(e));

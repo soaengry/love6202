@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { validate } from "@/middleware/validate";
 import { authenticate } from "@/middleware/auth";
+import { rotateSession } from "@/middleware/session";
 import { apiResponse } from "@/util/apiResponse";
 import { setAuthCookies, clearAuthCookies, COOKIE_NAMES } from "@/util/cookie";
 import { loginSchema, refreshSchema, checkNicknameSchema } from "./user.schema";
@@ -15,6 +16,7 @@ router.post(
     try {
       const { code, deviceId } = req.body;
       const result = await authService.googleLogin(code, deviceId);
+      rotateSession(req, res); // Session Fixation 방지
       setAuthCookies(res, result.accessToken, result.refreshToken);
       res.json(apiResponse.ok("로그인 성공", { user: result.user }));
     } catch (err) {
@@ -34,6 +36,7 @@ router.post(
       }
       const { deviceId } = req.body;
       const result = await authService.refresh(refreshToken, deviceId);
+      rotateSession(req, res); // 토큰 갱신 시 세션 ID 교체
       setAuthCookies(res, result.accessToken, result.refreshToken);
       res.json(apiResponse.ok("토큰 갱신 성공", null));
     } catch (err) {

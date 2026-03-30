@@ -51,13 +51,21 @@ export async function changeUserRole(
     throw AppError.from(AdminErrorCode.ADMIN_USER_NOT_FOUND);
   }
 
-  const updated = await prisma.user.update({
-    where: { id: targetUserId, version: targetUser.version },
-    data: {
-      role: newRole,
-      version: { increment: 1 },
-    },
-  });
+  const [updated] = await prisma.$transaction([
+    prisma.user.update({
+      where: { id: targetUserId, version: targetUser.version },
+      data: { role: newRole, version: { increment: 1 } },
+    }),
+    prisma.auditLog.create({
+      data: {
+        actorId: adminUserId,
+        action: "ROLE_CHANGE",
+        targetType: "USER",
+        targetId: targetUserId,
+        meta: { from: targetUser.role, to: newRole },
+      },
+    }),
+  ]);
 
   return toAdminUserSearchResult(updated);
 }

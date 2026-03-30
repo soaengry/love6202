@@ -22,7 +22,11 @@ export function errorHandler(
     });
   }
 
-  console.error("Unhandled error:", err);
+  if (process.env.NODE_ENV === "production") {
+    console.error(JSON.stringify({ message: err.message, name: err.name, ts: new Date().toISOString() }));
+  } else {
+    console.error("Unhandled error:", err);
+  }
   res.status(500).json({
     status: { code: 500, message: "Internal Server Error" },
     data: null,
