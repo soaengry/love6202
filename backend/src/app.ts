@@ -13,6 +13,7 @@ import galleryRouter from "@/domain/gallery/gallery.router";
 import guestbookRouter from "@/domain/guestbook/guestbook.router";
 import uploadRouter from "@/domain/upload/upload.router";
 import adminRouter from "@/domain/admin/admin.router";
+import rsvpRouter from "@/domain/rsvp/rsvp.router";
 import { ensureSession } from "@/middleware/session";
 
 const app = express();
@@ -53,6 +54,7 @@ app.use("/api/galleries", galleryRouter);
 app.use("/api/guestbooks", guestbookRouter);
 app.use("/api/uploads", uploadRouter);
 app.use("/api/admin", adminRouter);
+app.use("/api/rsvp", rsvpRouter);
 
 app.use(errorHandler);
 
