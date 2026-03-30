@@ -106,6 +106,7 @@ model Wedding {
   galleries       Gallery[]
   guestbooks      Guestbook[]
   uploads         Upload[]
+  rsvps           Rsvp[]
 
   @@map("weddings")
 }
@@ -241,4 +242,30 @@ model Guestbook {
   wedding Wedding @relation(fields: [weddingId], references: [id], onDelete: Cascade)
 
   @@map("guestbooks")
+}
+
+model Rsvp {
+  id            Int      @id @default(autoincrement())
+  weddingId     Int
+  sessionId     String   @db.VarChar(100)
+  userId        Int?
+  attendance    String   @db.VarChar(10)
+  name          String   @db.VarChar(50)
+  side          String   @db.VarChar(20)
+  phone         String   @db.VarChar(20)
+  attendeeCount Int      @default(1)
+  willEat       Boolean  @default(false)
+  mealCount     Int      @default(0)
+  willRide      Boolean  @default(false)
+  rideCount     Int      @default(0)
+  note          String?  @db.VarChar(50)
+  consent       Boolean  @default(false)
+  createdAt     DateTime @default(now()) @db.Timestamptz
+  updatedAt     DateTime @updatedAt @db.Timestamptz
+
+  wedding Wedding @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+
+  @@index([weddingId])
+  @@index([sessionId])
+  @@map("rsvps")
 }
