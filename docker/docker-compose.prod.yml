@@ -1,0 +1,65 @@
+services:
+  backend-blue:
+    image: ${DOCKERHUB_USERNAME}/love6202-backend:${IMAGE_TAG:-prod-latest}
+    container_name: love6202-backend-blue
+    restart: unless-stopped
+    env_file: /home/ubuntu/app/.env.prod
+    environment:
+      PORT: 3000
+      NODE_ENV: production
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - love6202-net
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  backend-green:
+    image: ${DOCKERHUB_USERNAME}/love6202-backend:${IMAGE_TAG:-prod-latest}
+    container_name: love6202-backend-green
+    restart: unless-stopped
+    env_file: /home/ubuntu/app/.env.prod
+    environment:
+      PORT: 3000
+      NODE_ENV: production
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - love6202-net
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: love6202-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /home/ubuntu/app/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - /home/ubuntu/app/nginx/upstream.conf:/etc/nginx/conf.d/upstream.conf:ro
+      - /etc/letsencrypt/live/${DOMAIN}/fullchain.pem:/etc/nginx/certs/fullchain.pem:ro
+      - /etc/letsencrypt/live/${DOMAIN}/privkey.pem:/etc/nginx/certs/privkey.pem:ro
+    depends_on:
+      - backend-blue
+    networks:
+      - love6202-net
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+
+networks:
+  love6202-net:
+    external: true
+
+# postgres, redis는 docker-compose.infra.yml 에서 관리
+# 이 파일 단독으로 사용하지 않음:
+#   docker-compose -f docker-compose.infra.yml -f docker-compose.prod.yml up -d

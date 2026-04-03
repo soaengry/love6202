@@ -1,0 +1,285 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  GUEST
+  HOST
+  ADMIN
+}
+
+model User {
+  id              Int       @id @default(autoincrement())
+  email           String    @unique @db.VarChar(255)
+  nickname        String    @unique @db.VarChar(50)
+  profileImageUrl String?   @db.VarChar(500)
+  role            Role      @default(GUEST)
+  providerId      String?   @db.VarChar(255)
+  tokenVersion    Int       @default(0)
+  version         Int       @default(0)
+  weddingId       Int?
+  deletedAt       DateTime? @db.Timestamptz
+  createdAt       DateTime  @default(now()) @db.Timestamptz
+  updatedAt       DateTime  @updatedAt @db.Timestamptz
+
+  wedding Wedding? @relation(fields: [weddingId], references: [id])
+
+  @@index([email])
+  @@index([providerId])
+  @@index([weddingId])
+  @@map("users")
+}
+
+model Bank {
+  id       Int          @id @default(autoincrement())
+  bankCode String       @unique @db.VarChar(10)
+  bankName String       @db.VarChar(50)
+
+  prefixes BankPrefix[]
+
+  @@map("banks")
+}
+
+model BankPrefix {
+  id     Int    @id @default(autoincrement())
+  bankId Int
+  prefix String @db.VarChar(10)
+
+  bank Bank @relation(fields: [bankId], references: [id])
+
+  @@unique([bankId, prefix])
+  @@map("bank_prefixes")
+}
+
+// ─── Wedding Domain ─────────────────────────────────────
+
+enum CoupleRole {
+  GROOM
+  BRIDE
+}
+
+enum AccountSide {
+  GROOM
+  GROOM_FAMILY
+  BRIDE
+  BRIDE_FAMILY
+}
+
+enum TransportationType {
+  SUBWAY
+  BUS
+  SHUTTLE
+}
+
+model Wedding {
+  id           Int       @id @default(autoincrement())
+  userId       Int       @unique
+  title        String    @db.VarChar(255)
+  weddingDate  DateTime  @db.Timestamptz
+  venueName    String    @db.VarChar(255)
+  venueAddress String    @db.VarChar(500)
+  venueDetail  String?   @db.VarChar(500)
+  venueLat     Float?    @db.DoublePrecision
+  venueLng     Float?    @db.DoublePrecision
+  dressCode    String?   @db.VarChar(255)
+  notice       String?   @db.Text
+  parkingInfo  String?   @db.Text
+  mealInfo     String?   @db.Text
+  greeting     String?   @db.Text
+  version      Int       @default(0)
+  deletedAt    DateTime? @db.Timestamptz
+  createdAt    DateTime  @default(now()) @db.Timestamptz
+  updatedAt    DateTime  @updatedAt @db.Timestamptz
+
+  user            User[]
+  heroImages      HeroImage[]
+  couples         Couple[]
+  accounts        Account[]
+  schedules       Schedule[]
+  transportations Transportation[]
+  announcements   Announcement[]
+  galleries       Gallery[]
+  guestbooks      Guestbook[]
+  uploads         Upload[]
+  rsvps           Rsvp[]
+
+  @@map("weddings")
+}
+
+model HeroImage {
+  id           Int      @id @default(autoincrement())
+  weddingId    Int
+  imageUrl     String   @db.VarChar(500)
+  thumbnailUrl String?  @db.VarChar(500)
+  orderIndex   Int
+  createdAt    DateTime @default(now()) @db.Timestamptz
+
+  wedding Wedding @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+
+  @@map("hero_images")
+}
+
+model Couple {
+  id              Int        @id @default(autoincrement())
+  weddingId       Int
+  role            CoupleRole
+  name            String     @db.VarChar(50)
+  email           String?    @db.VarChar(255)
+  contact         String?    @db.VarChar(50)
+  fatherName      String?    @db.VarChar(50)
+  isFatherAlive   Boolean    @default(true)
+  motherName      String?    @db.VarChar(50)
+  isMotherAlive   Boolean    @default(true)
+  profileImageUrl String?    @db.VarChar(500)
+
+  wedding Wedding @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+
+  @@unique([weddingId, role])
+  @@map("couples")
+}
+
+model Account {
+  id            Int         @id @default(autoincrement())
+  weddingId     Int
+  side          AccountSide
+  bankName      String?     @db.VarChar(100)
+  bankCode      String?     @db.VarChar(10)
+  accountNumber String?     @db.VarChar(50)
+  accountHolder String      @db.VarChar(50)
+  kakaoPayUrl   String?     @db.VarChar(500)
+  tossNumber    String?     @db.VarChar(50)
+  orderIndex    Int
+
+  wedding Wedding @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+
+  @@map("accounts")
+}
+
+model Schedule {
+  id          Int     @id @default(autoincrement())
+  weddingId   Int
+  orderIndex  Int
+  title       String  @db.VarChar(255)
+  description String? @db.Text
+
+  wedding Wedding @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+
+  @@map("schedules")
+}
+
+model Transportation {
+  id          Int               @id @default(autoincrement())
+  weddingId   Int
+  type        TransportationType
+  title       String            @db.VarChar(255)
+  description String?           @db.Text
+  orderIndex  Int
+
+  wedding Wedding @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+
+  @@map("transportations")
+}
+
+model Announcement {
+  id        Int      @id @default(autoincrement())
+  weddingId Int
+  title     String   @db.VarChar(255)
+  content   String   @db.Text
+  isPinned  Boolean  @default(false)
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+
+  wedding Wedding @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+
+  @@map("announcements")
+}
+
+model Gallery {
+  id           Int      @id @default(autoincrement())
+  weddingId    Int
+  imageUrl     String   @db.VarChar(500)
+  thumbnailUrl String?  @db.VarChar(500)
+  caption      String?  @db.VarChar(255)
+  orderIndex   Int
+  createdAt    DateTime @default(now()) @db.Timestamptz
+
+  wedding Wedding @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+
+  @@map("galleries")
+}
+
+model Upload {
+  id          Int      @id @default(autoincrement())
+  weddingId   Int
+  sessionId   String   @db.VarChar(36)
+  userId      Int?
+  driveFileId String   @db.VarChar(255)
+  imageUrl    String   @db.VarChar(500)
+  createdAt   DateTime @default(now()) @db.Timestamptz
+
+  wedding Wedding @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+
+  @@index([weddingId])
+  @@index([sessionId])
+  @@index([userId])
+  @@map("uploads")
+}
+
+model Guestbook {
+  id        Int      @id @default(autoincrement())
+  weddingId Int
+  name      String   @db.VarChar(50)
+  content   String   @db.VarChar(200)
+  type      String   @db.VarChar(20)
+  rotation  Float    @default(0)
+  createdAt DateTime @default(now()) @db.Timestamptz
+
+  wedding Wedding @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+
+  @@map("guestbooks")
+}
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  actorId    Int
+  action     String   @db.VarChar(50)
+  targetType String   @db.VarChar(50)
+  targetId   Int?
+  meta       Json?
+  createdAt  DateTime @default(now()) @db.Timestamptz
+
+  @@index([actorId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model Rsvp {
+  id            Int      @id @default(autoincrement())
+  weddingId     Int
+  sessionId     String   @db.VarChar(100)
+  userId        Int?
+  attendance    String   @db.VarChar(10)
+  name          String   @db.VarChar(50)
+  side          String   @db.VarChar(20)
+  phone         String   @db.VarChar(20)
+  attendeeCount Int      @default(1)
+  willEat       Boolean  @default(false)
+  mealCount     Int      @default(0)
+  willRide      Boolean  @default(false)
+  rideCount     Int      @default(0)
+  note          String?  @db.VarChar(50)
+  consent       Boolean  @default(false)
+  createdAt     DateTime @default(now()) @db.Timestamptz
+  updatedAt     DateTime @updatedAt @db.Timestamptz
+
+  wedding Wedding @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+
+  @@index([weddingId])
+  @@index([sessionId])
+  @@map("rsvps")
+}
