@@ -88,10 +88,7 @@ export async function googleLogin(
     });
   }
 
-  const deviceCount = await refreshTokenService.countDevices(user.id);
-  if (deviceCount >= MAX_DEVICES) {
-    await refreshTokenService.evictOldestDevice(user.id);
-  }
+  await refreshTokenService.ensureDeviceLimit(user.id, MAX_DEVICES);
 
   const accessToken = generateAccessToken(user);
   const refreshToken = generateRefreshToken(user.id, deviceId, user.tokenVersion);
