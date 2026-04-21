@@ -9,7 +9,6 @@ import {
 } from "react-hook-form";
 import {
   IoAddCircleOutline,
-  IoTrashOutline,
   IoCloseCircleOutline,
 } from "react-icons/io5";
 import type { WeddingFormData, AccountSide, PaymentMethod } from "../types.ts";
