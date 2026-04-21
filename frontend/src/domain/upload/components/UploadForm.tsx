@@ -22,8 +22,8 @@ export const UploadForm: FC<UploadFormProps> = ({
   const validateFiles = (newFiles: File[]): File[] => {
     const valid: File[] = [];
     for (const file of newFiles) {
-      if (!UPLOAD_VALIDATION.ACCEPTED_TYPES.includes(file.type as "image/jpeg" | "image/png")) {
-        toast.error(`${file.name}: JPEG, PNG 형식만 가능합니다.`);
+      if (!UPLOAD_VALIDATION.ACCEPTED_TYPES.includes(file.type as "image/jpeg" | "image/png" | "image/webp")) {
+        toast.error(`${file.name}: JPEG, PNG, WebP 형식만 가능합니다.`);
         continue;
       }
       if (file.size > UPLOAD_VALIDATION.MAX_FILE_SIZE_MB * 1024 * 1024) {
@@ -94,13 +94,13 @@ export const UploadForm: FC<UploadFormProps> = ({
           터치하여 사진을 선택하세요
         </p>
         <p className="text-xs text-text-tertiary mt-1">
-          JPEG, PNG · 최대 {UPLOAD_VALIDATION.MAX_FILE_SIZE_MB}MB ·{" "}
+          JPEG, PNG, WebP · 최대 {UPLOAD_VALIDATION.MAX_FILE_SIZE_MB}MB ·{" "}
           {UPLOAD_VALIDATION.MAX_UPLOAD_COUNT}장까지
         </p>
         <input
           ref={inputRef}
           type="file"
-          accept="image/jpeg,image/png"
+          accept="image/jpeg,image/png,image/webp"
           multiple
           className="hidden"
           onChange={handleFileSelect}
