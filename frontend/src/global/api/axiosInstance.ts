@@ -12,6 +12,20 @@ const api = axios.create({
   withCredentials: true,
 });
 
+function getCsrfToken(): string | null {
+  const match = document.cookie.match(/(?:^| )csrf_token=([^;]+)/);
+  return match ? match[1] : null;
+}
+
+api.interceptors.request.use((config) => {
+  const method = config.method?.toUpperCase() ?? "";
+  if (!["GET", "HEAD", "OPTIONS"].includes(method)) {
+    const token = getCsrfToken();
+    if (token) config.headers["x-csrf-token"] = token;
+  }
+  return config;
+});
+
 // Response: data 추출 + 401 refresh
 let isRefreshing = false;
 let refreshQueue: Array<{
@@ -63,10 +77,14 @@ api.interceptors.response.use(
     originalRequest._retry = true;
 
     try {
+      const csrfToken = getCsrfToken();
       await axios.post(
         `${ENV.API_BASE_URL}/api/auth/refresh`,
         { deviceId: getDeviceId() },
-        { withCredentials: true },
+        {
+          withCredentials: true,
+          headers: csrfToken ? { "x-csrf-token": csrfToken } : {},
+        },
       );
       processQueue(null);
       return api(originalRequest);
