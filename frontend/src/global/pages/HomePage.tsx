@@ -27,8 +27,9 @@ export const HomePage: FC = () => {
     const fetchWedding = async () => {
       setLoading(true);
       try {
-        const { data } = weddingId
-          ? await weddingApi.getWedding(Number(weddingId))
+        const parsedId = weddingId ? Number(weddingId) : NaN;
+        const { data } = !isNaN(parsedId)
+          ? await weddingApi.getWedding(parsedId)
           : await weddingApi.getLatestWedding();
         setWedding(data);
       } catch {
