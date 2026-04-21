@@ -1,4 +1,4 @@
-import { useState, useRef, type FC } from "react";
+import { useState, useRef, useEffect, type FC } from "react";
 import {
   useFieldArray,
   type Control,
@@ -11,8 +11,9 @@ import {
   IoAddCircleOutline,
   IoCloseCircleOutline,
 } from "react-icons/io5";
-import type { WeddingFormData, AccountSide, PaymentMethod } from "../types.ts";
+import type { WeddingFormData } from "../types.ts";
 import { weddingApi } from "../api/weddingApi.ts";
+import { SIDE_OPTIONS, PAYMENT_METHODS } from "../wedding.constants.ts";
 
 interface AccountStepProps {
   control: Control<WeddingFormData>;
@@ -20,20 +21,6 @@ interface AccountStepProps {
   register: UseFormRegister<WeddingFormData>;
   setValue: UseFormSetValue<WeddingFormData>;
 }
-
-const SIDE_OPTIONS: { value: AccountSide; label: string }[] = [
-  { value: "GROOM", label: "신랑측" },
-  { value: "GROOM_FAMILY", label: "신랑 혼주측" },
-  { value: "BRIDE", label: "신부측" },
-  { value: "BRIDE_FAMILY", label: "신부 혼주측" },
-];
-
-const PAYMENT_METHODS: { value: PaymentMethod; label: string; icon: string }[] =
-  [
-    { value: "BANK", label: "은행 계좌", icon: "🏦" },
-    { value: "KAKAOPAY", label: "카카오페이", icon: "💛" },
-    { value: "TOSS", label: "토스", icon: "💙" },
-  ];
 
 const inputClass =
   "w-full px-4 py-2.5 border border-border rounded-xl bg-bg-primary text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors";
@@ -54,9 +41,12 @@ export const AccountStep: FC<AccountStepProps> = ({
   });
   const accounts = useWatch({ control, name: "accounts" });
   const [detectingMap, setDetectingMap] = useState<Record<number, boolean>>({});
-  const debounceTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>(
-    {},
-  );
+  const debounceTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
+
+  // 언마운트 시 미실행 타이머 정리
+  useEffect(() => {
+    return () => { Object.values(debounceTimers.current).forEach(clearTimeout); };
+  }, []);
 
   const handleAdd = (type: PaymentMethod) => {
     append({

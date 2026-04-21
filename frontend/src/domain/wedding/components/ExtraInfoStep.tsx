@@ -6,19 +6,14 @@ import {
   type UseFormRegister,
 } from "react-hook-form";
 import { IoAddCircleOutline, IoTrashOutline } from "react-icons/io5";
-import type { WeddingFormData, TransportationType } from "../types.ts";
+import type { WeddingFormData } from "../types.ts";
+import { TRANSPORT_OPTIONS } from "../wedding.constants.ts";
 
 interface ExtraInfoStepProps {
   control: Control<WeddingFormData>;
   errors: FieldErrors<WeddingFormData>;
   register: UseFormRegister<WeddingFormData>;
 }
-
-const TRANSPORT_OPTIONS: { value: TransportationType; label: string }[] = [
-  { value: "SUBWAY", label: "지하철" },
-  { value: "BUS", label: "버스" },
-  { value: "SHUTTLE", label: "셔틀" },
-];
 
 export const ExtraInfoStep: FC<ExtraInfoStepProps> = ({
   control,
