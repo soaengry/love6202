@@ -45,6 +45,13 @@ function isValidImageBuffer(buffer: Buffer): boolean {
   return false;
 }
 
+export function parseMultipartJson(req: Request, _res: Response, next: NextFunction) {
+  if (typeof req.body.data === "string") {
+    req.body = JSON.parse(req.body.data);
+  }
+  next();
+}
+
 export function validateUploadedFiles(req: Request, _res: Response, next: NextFunction) {
   const files: Express.Multer.File[] = [];
 
