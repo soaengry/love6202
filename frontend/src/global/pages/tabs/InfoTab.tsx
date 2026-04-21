@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useRef, type FC } from "react";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import {
   IoCallOutline,
-  IoNavigateOutline,
   IoCopyOutline,
   IoChevronDownOutline,
 } from "react-icons/io5";
