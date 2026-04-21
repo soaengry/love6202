@@ -8,6 +8,18 @@ function key(userId: number, deviceId: string) {
   return `refresh:${userId}:${deviceId}`;
 }
 
+async function scanDeviceKeys(userId: number): Promise<string[]> {
+  const pattern = `refresh:${userId}:*`;
+  const result: string[] = [];
+  let cursor = "0";
+  do {
+    const [next, found] = await redis.scan(cursor, "MATCH", pattern, "COUNT", 100);
+    cursor = next;
+    result.push(...found);
+  } while (cursor !== "0");
+  return result;
+}
+
 export async function save(userId: number, deviceId: string, token: string) {
   const hashed = await bcrypt.hash(token, BCRYPT_ROUNDS);
   await redis.setex(key(userId, deviceId), TTL, hashed);
@@ -28,17 +40,17 @@ export async function deleteByDevice(userId: number, deviceId: string) {
 }
 
 export async function deleteAllByUser(userId: number) {
-  const keys = await redis.keys(`refresh:${userId}:*`);
+  const keys = await scanDeviceKeys(userId);
   if (keys.length > 0) await redis.del(...keys);
 }
 
 export async function countDevices(userId: number): Promise<number> {
-  const keys = await redis.keys(`refresh:${userId}:*`);
+  const keys = await scanDeviceKeys(userId);
   return keys.length;
 }
 
 export async function evictOldestDevice(userId: number): Promise<void> {
-  const keys = await redis.keys(`refresh:${userId}:*`);
+  const keys = await scanDeviceKeys(userId);
   if (keys.length === 0) return;
   const ttls = await Promise.all(keys.map((k) => redis.ttl(k)));
   const oldestIdx = ttls.indexOf(Math.min(...ttls));
