@@ -2,8 +2,10 @@ import multer, { type FileFilterCallback } from "multer";
 import type { Request, Response, NextFunction } from "express";
 import { AppError } from "@/util/appError";
 
-const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
-const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png"];
+const MAX_FILE_SIZE = 2 * 1024 * 1024;          // 2MB — 프로필·갤러리·웨딩
+const MAX_USER_FILE_SIZE = 10 * 1024 * 1024;     // 10MB — 사용자 사진 업로드
+const MAX_USER_TOTAL_SIZE = 100 * 1024 * 1024;   // 100MB — 사용자 사진 업로드 합산
+const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 const fileFilter = (_req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
   if (ALLOWED_MIME_TYPES.includes(file.mimetype)) {
@@ -19,13 +21,19 @@ const upload = multer({
   fileFilter,
 });
 
+const userUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_USER_FILE_SIZE },
+  fileFilter,
+});
+
 export const uploadProfileImage = upload.single("profileImage");
 
-export const uploadGalleryImages = upload.array("images", 20);
+export const uploadGalleryImages = userUpload.array("images", 20);
 
-export const uploadUserImages = upload.array("images", 10);
+export const uploadUserImages = userUpload.array("images", 10);
 
-export const uploadWeddingImages = upload.fields([
+export const uploadWeddingImages = userUpload.fields([
   { name: "heroImages", maxCount: 4 },
   { name: "groomProfileImage", maxCount: 1 },
   { name: "brideProfileImage", maxCount: 1 },
@@ -42,6 +50,12 @@ function isValidImageBuffer(buffer: Buffer): boolean {
     buffer[3] === 0x47 && buffer[4] === 0x0d && buffer[5] === 0x0a &&
     buffer[6] === 0x1a && buffer[7] === 0x0a
   ) return true;
+  // WebP: RIFF????WEBP
+  if (
+    buffer.length >= 12 &&
+    buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46 &&
+    buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50
+  ) return true;
   return false;
 }
 
@@ -52,12 +66,9 @@ export function parseMultipartJson(req: Request, _res: Response, next: NextFunct
   next();
 }
 
-export function validateUploadedFiles(req: Request, _res: Response, next: NextFunction) {
+function collectFiles(req: Request): Express.Multer.File[] {
   const files: Express.Multer.File[] = [];
-
-  if (req.file) {
-    files.push(req.file);
-  }
+  if (req.file) files.push(req.file);
   if (req.files) {
     if (Array.isArray(req.files)) {
       files.push(...req.files);
@@ -65,11 +76,44 @@ export function validateUploadedFiles(req: Request, _res: Response, next: NextFu
       Object.values(req.files).forEach((arr) => files.push(...arr));
     }
   }
+  return files;
+}
+
+export function validateUploadedFiles(req: Request, _res: Response, next: NextFunction) {
+  const files = collectFiles(req);
 
   for (const file of files) {
     if (!isValidImageBuffer(file.buffer)) {
       return next(new AppError("INVALID_FILE_TYPE", 400, "유효하지 않은 이미지 파일입니다."));
     }
+  }
+
+  next();
+}
+
+export function validateUserUploadFiles(req: Request, _res: Response, next: NextFunction) {
+  const files = collectFiles(req);
+
+  for (const file of files) {
+    if (!isValidImageBuffer(file.buffer)) {
+      const ext = file.originalname.includes(".")
+        ? file.originalname.split(".").pop()?.toUpperCase()
+        : "알 수 없음";
+      const header = file.buffer.slice(0, 8).toString("hex").toUpperCase().match(/../g)?.join(" ");
+      console.warn(`[upload] 유효하지 않은 파일: ${file.originalname} | 첫 바이트: ${header} | mimetype: ${file.mimetype}`);
+      return next(
+        new AppError(
+          "INVALID_FILE_TYPE",
+          400,
+          `'${file.originalname}' 파일은 지원하지 않는 형식입니다. (.${ext}) JPG, PNG 파일만 업로드 가능합니다.`,
+        ),
+      );
+    }
+  }
+
+  const totalSize = files.reduce((sum, f) => sum + f.size, 0);
+  if (totalSize > MAX_USER_TOTAL_SIZE) {
+    return next(new AppError("UPLOAD_TOTAL_SIZE_EXCEEDED", 400, "총 업로드 용량은 100MB를 초과할 수 없습니다."));
   }
 
   next();

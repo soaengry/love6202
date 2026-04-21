@@ -2,7 +2,9 @@ import {
   S3Client,
   PutObjectCommand,
   DeleteObjectCommand,
+  GetObjectCommand,
 } from "@aws-sdk/client-s3";
+import type { Readable } from "node:stream";
 import sharp from "sharp";
 import { env } from "@/config/env";
 import crypto from "crypto";
@@ -16,7 +18,9 @@ const s3 = new S3Client({
 });
 
 function getExtension(mimetype: string): string {
-  return mimetype === "image/png" ? ".png" : ".jpg";
+  if (mimetype === "image/png") return ".png";
+  if (mimetype === "image/webp") return ".webp";
+  return ".jpg";
 }
 
 export async function uploadImage(
@@ -37,11 +41,12 @@ export async function uploadImage(
 
 export async function uploadImageWithThumbnail(
   file: Express.Multer.File,
-): Promise<{ imageUrl: string; thumbnailUrl: string }> {
+  folder = "galleries",
+): Promise<{ imageUrl: string; thumbnailUrl: string; originalKey: string }> {
   const uuid = crypto.randomUUID();
   const ext = getExtension(file.mimetype);
-  const originalKey = `galleries/${uuid}${ext}`;
-  const thumbKey = `galleries/thumbs/${uuid}.jpg`;
+  const originalKey = `${folder}/${uuid}${ext}`;
+  const thumbKey = `${folder}/thumbs/${uuid}.jpg`;
 
   // 원본 업로드
   await s3.send(
@@ -72,10 +77,32 @@ export async function uploadImageWithThumbnail(
   return {
     imageUrl: `${baseUrl}/${originalKey}`,
     thumbnailUrl: `${baseUrl}/${thumbKey}`,
+    originalKey,
   };
 }
 
 export async function deleteFile(url: string): Promise<void> {
   const key = new URL(url).pathname.slice(1);
   await s3.send(new DeleteObjectCommand({ Bucket: env.AWS_BUCKET, Key: key }));
+}
+
+export async function deleteFileByKey(key: string): Promise<void> {
+  await s3.send(new DeleteObjectCommand({ Bucket: env.AWS_BUCKET, Key: key }));
+}
+
+export async function downloadFileBuffer(
+  s3Key: string,
+): Promise<{ buffer: Buffer; contentType: string }> {
+  const res = await s3.send(
+    new GetObjectCommand({ Bucket: env.AWS_BUCKET, Key: s3Key }),
+  );
+  const stream = res.Body as Readable;
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+  return {
+    buffer: Buffer.concat(chunks),
+    contentType: res.ContentType ?? "image/jpeg",
+  };
 }

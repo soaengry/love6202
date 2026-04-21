@@ -15,7 +15,7 @@ import { UploadTab } from "./tabs/UploadTab.tsx";
 export const HomePage: FC = () => {
   const { isAuthenticated, isLoading: authLoading } = useAuthStore();
   const { activeTab, setActiveTab } = useOutletContext<{ activeTab: TabId; setActiveTab: (tab: TabId) => void }>();
-  const { weddingId } = useParams<{ weddingId?: string }>();
+  const { weddingId: weddingIdParam } = useParams<{ weddingId?: string }>();
 
   const [wedding, setWedding] = useState<WeddingDetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -26,7 +26,7 @@ export const HomePage: FC = () => {
     const fetchWedding = async () => {
       setLoading(true);
       try {
-        const parsedId = weddingId ? Number(weddingId) : NaN;
+        const parsedId = weddingIdParam ? Number(weddingIdParam) : NaN;
         const { data } = !isNaN(parsedId)
           ? await weddingApi.getWedding(parsedId)
           : await weddingApi.getLatestWedding();
@@ -39,7 +39,7 @@ export const HomePage: FC = () => {
     };
 
     fetchWedding();
-  }, [isAuthenticated, authLoading, weddingId]);
+  }, [isAuthenticated, authLoading, weddingIdParam]);
 
   // 인증 로딩 중
   if (authLoading) {

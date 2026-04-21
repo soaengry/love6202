@@ -214,13 +214,16 @@ model Gallery {
 }
 
 model Upload {
-  id          Int      @id @default(autoincrement())
-  weddingId   Int
-  sessionId   String   @db.VarChar(36)
-  userId      Int?
-  driveFileId String   @db.VarChar(255)
-  imageUrl    String   @db.VarChar(500)
-  createdAt   DateTime @default(now()) @db.Timestamptz
+  id            Int       @id @default(autoincrement())
+  weddingId     Int
+  sessionId     String    @db.VarChar(36)
+  userId        Int?
+  s3Key         String?   @db.VarChar(500)
+  driveFileId   String?   @db.VarChar(255)
+  driveSyncedAt DateTime? @db.Timestamptz
+  imageUrl      String    @db.VarChar(500)
+  thumbnailUrl  String?   @db.VarChar(500)
+  createdAt     DateTime  @default(now()) @db.Timestamptz
 
   wedding Wedding @relation(fields: [weddingId], references: [id], onDelete: Cascade)
 
