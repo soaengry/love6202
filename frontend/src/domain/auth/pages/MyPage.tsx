@@ -65,8 +65,9 @@ export const MyPage: FC = () => {
     } catch {
       // 서버 에러여도 로컬 로그아웃 진행
     }
-    logout();
+    // navigate 먼저: ProtectedRoute가 /login으로 리다이렉트하기 전에 public 경로로 이동
     navigate("/", { replace: true });
+    logout();
   };
 
   const handleDelete = async () => {
