@@ -6,7 +6,7 @@ on:
       - dev
 
 env:
-  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/love6202-backend
+  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/love6202-backend-dev
 
 jobs:
   build-and-push:
@@ -34,8 +34,8 @@ jobs:
         with:
           images: ${{ env.IMAGE_NAME }}
           tags: |
-            type=sha,prefix=dev-,format=short
-            type=raw,value=dev-latest
+            type=sha,format=short
+            type=raw,value=latest
 
       - name: Build and push
         uses: docker/build-push-action@v5
