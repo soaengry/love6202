@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { optionalAuth } from "@/middleware/auth";
-import { uploadUserImages, validateUploadedFiles } from "@/middleware/upload";
+import { uploadUserImages, validateUserUploadFiles } from "@/middleware/upload";
 import { validate } from "@/middleware/validate";
 import { apiResponse } from "@/util/apiResponse";
 import { AppError } from "@/util/appError";
@@ -11,7 +11,7 @@ import * as uploadService from "./upload.service";
 
 const router = Router();
 
-// GET /api/uploads/image/:driveFileId — Google Drive 이미지 프록시 (인증 불필요)
+// GET /api/uploads/image/:driveFileId — 기존 Drive 업로드 파일 하위호환 프록시
 router.get(
   "/image/:driveFileId",
   async (req: Request, res: Response, next: NextFunction) => {
@@ -28,7 +28,6 @@ router.get(
   },
 );
 
-// 모든 라우트에 optionalAuth 적용 (userId 있으면 주입)
 router.use(optionalAuth);
 
 // GET /api/uploads/me?weddingId=1 — 내 업로드 조회
@@ -51,11 +50,11 @@ router.get(
   },
 );
 
-// POST /api/uploads?weddingId=1 — 사진 업로드
+// POST /api/uploads?weddingId=1 — 사진 업로드 (S3 우선, Drive는 백그라운드 동기화)
 router.post(
   "/",
   uploadUserImages,
-  validateUploadedFiles,
+  validateUserUploadFiles,
   validate({ query: uploadQuerySchema }),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -78,7 +77,7 @@ router.post(
   },
 );
 
-// DELETE /api/uploads/:id — 사진 삭제
+// DELETE /api/uploads/:id — 사진 삭제 (S3 + Drive)
 router.delete(
   "/:id",
   validate({ params: uploadDeleteParamsSchema }),

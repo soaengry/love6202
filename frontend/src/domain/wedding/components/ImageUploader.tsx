@@ -1,5 +1,6 @@
-import { useRef, type FC } from "react";
+import { useRef, useMemo, useEffect, type FC } from "react";
 import { IoCloudUploadOutline, IoCloseCircleOutline } from "react-icons/io5";
+import { toast } from "react-toastify";
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/jpeg", "image/png"];
@@ -17,12 +18,23 @@ export const ImageUploader: FC<ImageUploaderProps> = ({ images, onChange, maxCou
   const inputRef = useRef<HTMLInputElement>(null);
   const totalCount = existingUrls.length + images.length;
 
+  // 렌더링마다 새 URL이 생성되는 메모리 누수 방지: images 배열이 바뀔 때만 URL 재생성
+  const previewUrls = useMemo(
+    () => images.map((file) => URL.createObjectURL(file)),
+    [images],
+  );
+  useEffect(() => () => previewUrls.forEach(URL.revokeObjectURL), [previewUrls]);
+
   const handleSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
+    const invalid = files.filter((f) => !ALLOWED_TYPES.includes(f.type) || f.size > MAX_FILE_SIZE);
+    if (invalid.length > 0) toast.error("JPG, PNG만 허용되며 파일 크기는 2MB 이하여야 합니다.");
     const valid = files.filter((f) => ALLOWED_TYPES.includes(f.type) && f.size <= MAX_FILE_SIZE);
     const remaining = maxCount - totalCount;
     if (remaining > 0) {
       onChange([...images, ...valid.slice(0, remaining)]);
+    } else {
+      toast.error(`이미지는 최대 ${maxCount}장까지 추가할 수 있습니다.`);
     }
     if (inputRef.current) inputRef.current.value = "";
   };
@@ -56,10 +68,9 @@ export const ImageUploader: FC<ImageUploaderProps> = ({ images, onChange, maxCou
           {images.map((file, i) => (
             <div key={`${file.name}-${i}`} className="relative w-20 h-20 rounded-lg overflow-hidden border border-border">
               <img
-                src={URL.createObjectURL(file)}
+                src={previewUrls[i]}
                 alt={file.name}
                 className="w-full h-full object-cover"
-                onLoad={(e) => URL.revokeObjectURL((e.target as HTMLImageElement).src)}
               />
               <button
                 type="button"
@@ -110,12 +121,24 @@ interface SingleImageUploaderProps {
 export const SingleImageUploader: FC<SingleImageUploaderProps> = ({ image, previewUrl, onChange, label = "프로필 이미지" }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const displayUrl = image ? URL.createObjectURL(image) : previewUrl;
+  // image가 바뀔 때만 URL 재생성하여 메모리 누수 방지
+  const displayUrl = useMemo(
+    () => (image ? URL.createObjectURL(image) : previewUrl),
+    [image, previewUrl],
+  );
+  useEffect(() => {
+    return () => {
+      if (displayUrl?.startsWith("blob:")) URL.revokeObjectURL(displayUrl);
+    };
+  }, [displayUrl]);
 
   const handleSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!ALLOWED_TYPES.includes(file.type) || file.size > MAX_FILE_SIZE) return;
+    if (!ALLOWED_TYPES.includes(file.type) || file.size > MAX_FILE_SIZE) {
+      toast.error("JPG, PNG만 허용되며 파일 크기는 2MB 이하여야 합니다.");
+      return;
+    }
     onChange(file);
     if (inputRef.current) inputRef.current.value = "";
   };

@@ -1,5 +1,6 @@
+import type { Response } from "express";
 import prisma from "@/prisma";
-import redis from "@/config/redis";
+import redis, { createSubscriber } from "@/config/redis";
 import { AppError } from "@/util/appError";
 import { paginate } from "@/util/pagination";
 import { GuestbookErrorCode } from "./guestbook.error";
@@ -41,7 +42,6 @@ export async function createGuestbook(data: {
   content: string;
   type: string;
 }): Promise<GuestbookResponse> {
-  // 초대장 존재 확인
   const wedding = await prisma.wedding.findUnique({
     where: { id: data.weddingId, deletedAt: null },
   });
@@ -63,7 +63,7 @@ export async function createGuestbook(data: {
 
   const response = toGuestbookResponse(guestbook);
 
-  // Redis Pub/Sub — 알림
+  // Redis Pub/Sub — 실시간 알림
   await redis.publish(
     `guestbook:wedding:${data.weddingId}`,
     JSON.stringify(response),
@@ -85,12 +85,39 @@ export async function deleteGuestbook(
     throw AppError.from(GuestbookErrorCode.GUESTBOOK_NOT_FOUND);
   }
 
-  // ADMIN/HOST 권한은 라우터 미들웨어에서 이미 확인됨
-  // HOST의 경우 자기 초대장의 방명록만 삭제 가능한지 추가 확인
+  // HOST의 경우 자기 초대장의 방명록만 삭제 가능
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (user?.role === "HOST" && user.weddingId !== guestbook.weddingId) {
     throw AppError.from(GuestbookErrorCode.GUESTBOOK_UNAUTHORIZED);
   }
 
   await prisma.guestbook.delete({ where: { id: guestbookId } });
+}
+
+// ─── SSE Subscribe ───────────────────────────────────────
+
+export function subscribeGuestbook(weddingId: number, res: Response): void {
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no");
+  res.flushHeaders();
+
+  const subscriber = createSubscriber();
+  const channel = `guestbook:wedding:${weddingId}`;
+
+  subscriber.subscribe(channel);
+  subscriber.on("message", (_ch: string, message: string) => {
+    res.write(`data: ${message}\n\n`);
+  });
+
+  const heartbeat = setInterval(() => {
+    res.write(": heartbeat\n\n");
+  }, 30_000);
+
+  res.on("close", () => {
+    clearInterval(heartbeat);
+    subscriber.unsubscribe(channel);
+    subscriber.disconnect();
+  });
 }

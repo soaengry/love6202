@@ -193,18 +193,22 @@ export async function getRsvpStats(
   userRole: string,
 ): Promise<RsvpStatsResponse> {
   await assertHostOwnsWedding(userId, userRole, weddingId);
-  const attending = await prisma.rsvp.findMany({
-    where: { weddingId, attendance: "YES" },
-    select: { attendeeCount: true, willEat: true, mealCount: true, willRide: true, rideCount: true },
-  });
 
-  const totalRsvpCount = await prisma.rsvp.count({ where: { weddingId } });
-  const attendingCount = attending.length;
-  const totalAttendeeCount = attending.reduce((sum, r) => sum + r.attendeeCount, 0);
-  const totalMealCount = attending.filter((r) => r.willEat).reduce((sum, r) => sum + r.mealCount, 0);
-  const totalShuttleCount = attending.filter((r) => r.willRide).reduce((sum, r) => sum + r.rideCount, 0);
+  const [all, attending] = await Promise.all([
+    prisma.rsvp.count({ where: { weddingId } }),
+    prisma.rsvp.findMany({
+      where: { weddingId, attendance: "YES" },
+      select: { attendeeCount: true, willEat: true, mealCount: true, willRide: true, rideCount: true },
+    }),
+  ]);
 
-  return { totalRsvpCount, attendingCount, totalAttendeeCount, totalMealCount, totalShuttleCount };
+  return {
+    totalRsvpCount: all,
+    attendingCount: attending.length,
+    totalAttendeeCount: attending.reduce((sum, r) => sum + r.attendeeCount, 0),
+    totalMealCount: attending.filter((r) => r.willEat).reduce((sum, r) => sum + r.mealCount, 0),
+    totalShuttleCount: attending.filter((r) => r.willRide).reduce((sum, r) => sum + r.rideCount, 0),
+  };
 }
 
 // ─── List (Admin/Host) ────────────────────────────────────

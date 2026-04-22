@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { authenticate } from "@/middleware/auth";
-import { uploadWeddingImages, validateUploadedFiles } from "@/middleware/upload";
+import { uploadWeddingImages, validateUploadedFiles, parseMultipartJson } from "@/middleware/upload";
 import { validate } from "@/middleware/validate";
 import { apiResponse } from "@/util/apiResponse";
 import { createWeddingBodySchema, updateWeddingBodySchema, weddingIdParamSchema } from "./wedding.schema";
@@ -57,13 +57,7 @@ router.post(
   "/",
   uploadWeddingImages,
   validateUploadedFiles,
-  (req: Request, _res: Response, next: NextFunction) => {
-    // multipart에서 JSON data 필드 파싱
-    if (typeof req.body.data === "string") {
-      req.body = JSON.parse(req.body.data);
-    }
-    next();
-  },
+  parseMultipartJson,
   validate({ body: createWeddingBodySchema }),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -85,12 +79,7 @@ router.put(
   "/:id",
   uploadWeddingImages,
   validateUploadedFiles,
-  (req: Request, _res: Response, next: NextFunction) => {
-    if (typeof req.body.data === "string") {
-      req.body = JSON.parse(req.body.data);
-    }
-    next();
-  },
+  parseMultipartJson,
   validate({ body: updateWeddingBodySchema, params: weddingIdParamSchema }),
   async (req: Request, res: Response, next: NextFunction) => {
     try {

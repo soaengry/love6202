@@ -1,6 +1,7 @@
 import type { FC } from "react";
 import type { UseFormRegister, FieldErrors } from "react-hook-form";
 import type { WeddingFormData } from "../types.ts";
+import { COUPLE_SECTIONS } from "../wedding.constants.ts";
 import { SingleImageUploader } from "./ImageUploader.tsx";
 
 interface CoupleStepProps {
@@ -14,10 +15,6 @@ interface CoupleStepProps {
   bridePreviewUrl?: string;
 }
 
-const COUPLE_SECTIONS = [
-  { index: 0, role: "GROOM" as const, label: "신랑", imageLabel: "신랑 사진" },
-  { index: 1, role: "BRIDE" as const, label: "신부", imageLabel: "신부 사진" },
-] as const;
 
 export const CoupleStep: FC<CoupleStepProps> = ({
   register,

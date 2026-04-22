@@ -1,4 +1,4 @@
-import { useState, useEffect, type FC } from "react";
+import { useState, type FC } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -14,9 +14,8 @@ import { toast } from "react-toastify";
 import { useAuthStore } from "../store/useAuthStore.ts";
 import { authApi } from "../api/authApi.ts";
 import { getDeviceId } from "../auth.utils.ts";
-import { weddingApi } from "@/domain/wedding/api/weddingApi.ts";
-import { adminApi } from "@/domain/admin/api/adminApi.ts";
-import type { AdminWeddingListItem } from "@/domain/admin/types.ts";
+import { useMyWedding } from "../hooks/useMyWedding.ts";
+import { useAdminWeddings } from "../hooks/useAdminWeddings.ts";
 import { WeddingCard } from "@/domain/admin/components/WeddingCard.tsx";
 import { UserPermissionManager } from "@/domain/admin/components/UserPermissionManager.tsx";
 
@@ -24,40 +23,9 @@ export const MyPage: FC = () => {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const [isDeleting, setIsDeleting] = useState(false);
-  const [myWedding, setMyWedding] = useState<AdminWeddingListItem | null>(null);
-  const [hasWedding, setHasWedding] = useState<boolean | null>(null);
-  const [adminWeddings, setAdminWeddings] = useState<AdminWeddingListItem[]>([]);
 
-  useEffect(() => {
-    weddingApi
-      .getMyWedding()
-      .then((res) => {
-        if (!res.data) {
-          setHasWedding(false);
-          return;
-        }
-        const w = res.data.wedding;
-        const couples = res.data.couples ?? [];
-        const coupleNames = couples
-          .sort((a: { role: string }) => (a.role === "GROOM" ? -1 : 1))
-          .map((c: { name: string }) => c.name)
-          .join(" & ");
-        setMyWedding({
-          id: w.id,
-          title: w.title,
-          weddingDate: w.weddingDate,
-          venueName: w.venueName,
-          coupleNames,
-          createdAt: w.createdAt,
-        });
-        setHasWedding(true);
-      })
-      .catch(() => setHasWedding(false));
-
-    if (user?.role === "ADMIN") {
-      adminApi.getWeddings().then((res) => setAdminWeddings(res.data)).catch(() => {});
-    }
-  }, [user?.role]);
+  const { myWedding, hasWedding } = useMyWedding();
+  const adminWeddings = useAdminWeddings(user?.role === "ADMIN");
 
   const handleLogout = async () => {
     try {
@@ -65,8 +33,9 @@ export const MyPage: FC = () => {
     } catch {
       // 서버 에러여도 로컬 로그아웃 진행
     }
-    logout();
+    // navigate 먼저: ProtectedRoute가 /login으로 리다이렉트하기 전에 public 경로로 이동
     navigate("/", { replace: true });
+    logout();
   };
 
   const handleDelete = async () => {

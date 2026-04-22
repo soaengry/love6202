@@ -102,11 +102,30 @@ export const extraInfoSchema = z.object({
   ),
 });
 
-// 스텝별 필드 이름 (trigger 용)
-export const STEP_FIELDS = [
+// 전체 폼 스키마 — Create/Edit 페이지 공유
+export const weddingFormSchema = z.object({
+  wedding: basicInfoSchema.shape.wedding.merge(extraInfoSchema.shape.wedding),
+  couples: coupleSchema.shape.couples,
+  accounts: accountSchema.shape.accounts,
+  schedules: scheduleSchema.shape.schedules,
+  transportations: extraInfoSchema.shape.transportations,
+  announcements: extraInfoSchema.shape.announcements,
+});
+
+import type { WeddingFormData } from "./types.ts";
+
+type WeddingFormPath =
+  | "wedding.title" | "wedding.weddingDate" | "wedding.venueName"
+  | "wedding.venueAddress" | "wedding.venueDetail" | "wedding.venueLat"
+  | "wedding.venueLng" | "wedding.greeting" | "wedding.dressCode"
+  | "wedding.notice" | "wedding.parkingInfo" | "wedding.mealInfo"
+  | keyof WeddingFormData;
+
+// 스텝별 trigger 대상 필드 경로 (타입 안전)
+export const STEP_FIELDS: readonly (readonly WeddingFormPath[])[] = [
   ["wedding.title", "wedding.weddingDate", "wedding.venueName", "wedding.venueAddress", "wedding.venueDetail", "wedding.venueLat", "wedding.venueLng", "wedding.greeting"],
   ["couples"],
   ["schedules"],
   ["accounts"],
   ["wedding.dressCode", "wedding.notice", "wedding.parkingInfo", "wedding.mealInfo", "transportations", "announcements"],
-] as const;
+];

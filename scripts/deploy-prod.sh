@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+# Blue/Green deployment for production backend
+# Usage: IMAGE_TAG=<tag> DOCKERHUB_USERNAME=<username> ./deploy-prod.sh
+set -euo pipefail
+
+APP_DIR=/home/ubuntu/app
+ACTIVE_FILE="$APP_DIR/.active_color"
+COMPOSE_FILE="$APP_DIR/docker/docker-compose.prod.yml"
+UPSTREAM_CONF="$APP_DIR/nginx/upstream.conf"
+
+IMAGE_TAG=${IMAGE_TAG:?IMAGE_TAG is required}
+DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME:?DOCKERHUB_USERNAME is required}
+
+# ── Ensure infra is running ─────────────────────────────────────────────────
+echo "==> Ensuring postgres and redis are running"
+IMAGE_TAG="$IMAGE_TAG" DOCKERHUB_USERNAME="$DOCKERHUB_USERNAME" \
+    docker compose -f "$COMPOSE_FILE" up -d postgres redis
+
+# ── Determine active/new color ─────────────────────────────────────────────
+ACTIVE_COLOR=$(cat "$ACTIVE_FILE" 2>/dev/null || echo "blue")
+if [ "$ACTIVE_COLOR" = "blue" ]; then
+    NEW_COLOR=green
+else
+    NEW_COLOR=blue
+fi
+
+ACTIVE_CONTAINER="love6202-backend-${ACTIVE_COLOR}"
+NEW_CONTAINER="love6202-backend-${NEW_COLOR}"
+
+echo "==> Deploying: active=$ACTIVE_COLOR → new=$NEW_COLOR (tag=$IMAGE_TAG)"
+
+# ── Pull new image ──────────────────────────────────────────────────────────
+echo "==> Pulling image ${DOCKERHUB_USERNAME}/love6202-backend:${IMAGE_TAG}"
+IMAGE_TAG="$IMAGE_TAG" DOCKERHUB_USERNAME="$DOCKERHUB_USERNAME" \
+    docker compose -f "$COMPOSE_FILE" pull "backend-${NEW_COLOR}"
+
+# ── Start new container ─────────────────────────────────────────────────────
+echo "==> Starting $NEW_CONTAINER"
+IMAGE_TAG="$IMAGE_TAG" DOCKERHUB_USERNAME="$DOCKERHUB_USERNAME" \
+    docker compose -f "$COMPOSE_FILE" up -d --no-deps "backend-${NEW_COLOR}"
+
+# ── Health check ────────────────────────────────────────────────────────────
+echo "==> Waiting for $NEW_CONTAINER to become healthy..."
+if ! "$APP_DIR/scripts/health-check.sh" "$NEW_CONTAINER" 12 5; then
+    echo "✗ Health check failed — rolling back"
+    docker stop "$NEW_CONTAINER" 2>/dev/null || true
+    docker rm "$NEW_CONTAINER" 2>/dev/null || true
+    echo "✓ Rollback complete — $ACTIVE_CONTAINER still active"
+    exit 1
+fi
+
+# ── Switch nginx upstream (upstream 블록만 교체, HTTPS 설정 보존) ────────────
+echo "==> Switching nginx upstream to $NEW_CONTAINER"
+sed -i "s/server love6202-backend-[a-z]*:3000/server ${NEW_CONTAINER}:3000/" "$UPSTREAM_CONF"
+
+docker exec love6202-nginx nginx -s reload
+echo "==> Nginx reloaded — traffic now routes to $NEW_CONTAINER"
+
+# ── Stop old container ──────────────────────────────────────────────────────
+echo "==> Stopping old container $ACTIVE_CONTAINER"
+docker stop "$ACTIVE_CONTAINER" 2>/dev/null || true
+
+# ── Persist new active color ────────────────────────────────────────────────
+echo "$NEW_COLOR" > "$ACTIVE_FILE"
+echo "==> Deployment complete — active=$NEW_COLOR (tag=$IMAGE_TAG)"
