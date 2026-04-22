@@ -10,8 +10,10 @@ services:
     ports:
       - "8080:3000"
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - love6202-net
     deploy:
@@ -29,7 +31,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-love6202_dev}
     volumes:
       - /home/ubuntu/app/data/postgres-dev:/var/lib/postgresql/data
-      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - /home/ubuntu/app/docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB:-love6202_dev}"]
       interval: 10s
