@@ -6,6 +6,7 @@ set -euo pipefail
 APP_DIR=/home/ubuntu/app
 ACTIVE_FILE="$APP_DIR/.active_color"
 COMPOSE_FILE="$APP_DIR/docker/docker-compose.prod.yml"
+ENV_FILE="$APP_DIR/.env.prod"
 UPSTREAM_CONF="$APP_DIR/nginx/upstream.conf"
 
 IMAGE_TAG=${IMAGE_TAG:?IMAGE_TAG is required}
@@ -14,7 +15,7 @@ DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME:?DOCKERHUB_USERNAME is required}
 # ── Ensure infra is running ─────────────────────────────────────────────────
 echo "==> Ensuring postgres and redis are running"
 IMAGE_TAG="$IMAGE_TAG" DOCKERHUB_USERNAME="$DOCKERHUB_USERNAME" \
-    docker compose -f "$COMPOSE_FILE" up -d postgres redis
+    docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d postgres redis
 
 # ── Determine active/new color ─────────────────────────────────────────────
 ACTIVE_COLOR=$(cat "$ACTIVE_FILE" 2>/dev/null || echo "blue")
@@ -32,12 +33,12 @@ echo "==> Deploying: active=$ACTIVE_COLOR → new=$NEW_COLOR (tag=$IMAGE_TAG)"
 # ── Pull new image ──────────────────────────────────────────────────────────
 echo "==> Pulling image ${DOCKERHUB_USERNAME}/love6202-backend:${IMAGE_TAG}"
 IMAGE_TAG="$IMAGE_TAG" DOCKERHUB_USERNAME="$DOCKERHUB_USERNAME" \
-    docker compose -f "$COMPOSE_FILE" pull "backend-${NEW_COLOR}"
+    docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" pull "backend-${NEW_COLOR}"
 
 # ── Start new container ─────────────────────────────────────────────────────
 echo "==> Starting $NEW_CONTAINER"
 IMAGE_TAG="$IMAGE_TAG" DOCKERHUB_USERNAME="$DOCKERHUB_USERNAME" \
-    docker compose -f "$COMPOSE_FILE" up -d --no-deps "backend-${NEW_COLOR}"
+    docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --no-deps "backend-${NEW_COLOR}"
 
 # ── Health check ────────────────────────────────────────────────────────────
 echo "==> Waiting for $NEW_CONTAINER to become healthy..."
