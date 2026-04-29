@@ -83,6 +83,7 @@ services:
     volumes:
       - /home/ubuntu/app/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - /home/ubuntu/app/nginx/upstream.conf:/etc/nginx/conf.d/upstream.conf:ro
+      - /home/ubuntu/app/frontend/dist:/usr/share/nginx/html:ro
       - /etc/letsencrypt/live/${DOMAIN}/fullchain.pem:/etc/nginx/certs/fullchain.pem:ro
       - /etc/letsencrypt/live/${DOMAIN}/privkey.pem:/etc/nginx/certs/privkey.pem:ro
     depends_on:
