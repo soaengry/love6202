@@ -17,6 +17,11 @@ echo "==> Ensuring postgres and redis are running"
 IMAGE_TAG="$IMAGE_TAG" DOCKERHUB_USERNAME="$DOCKERHUB_USERNAME" \
     docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d postgres redis
 
+# ── Ensure nginx is running with latest config ───────────────────────────────
+echo "==> Ensuring nginx is up-to-date"
+IMAGE_TAG="$IMAGE_TAG" DOCKERHUB_USERNAME="$DOCKERHUB_USERNAME" \
+    docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d nginx
+
 # ── Determine active/new color ─────────────────────────────────────────────
 ACTIVE_COLOR=$(cat "$ACTIVE_FILE" 2>/dev/null || echo "blue")
 if [ "$ACTIVE_COLOR" = "blue" ]; then
