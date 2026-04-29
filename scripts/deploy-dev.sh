@@ -5,6 +5,7 @@ set -euo pipefail
 
 APP_DIR=/home/ubuntu/app
 COMPOSE_FILE="$APP_DIR/docker/docker-compose.dev.yml"
+ENV_FILE="$APP_DIR/.env.dev"
 
 IMAGE_TAG=${IMAGE_TAG:?IMAGE_TAG is required}
 DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME:?DOCKERHUB_USERNAME is required}
@@ -12,17 +13,17 @@ DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME:?DOCKERHUB_USERNAME is required}
 # ── Ensure infra is running ─────────────────────────────────────────────────
 echo "==> Ensuring postgres and redis are running"
 IMAGE_TAG="$IMAGE_TAG" DOCKERHUB_USERNAME="$DOCKERHUB_USERNAME" \
-    docker compose -f "$COMPOSE_FILE" up -d postgres redis
+    docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d postgres redis
 
 # ── Pull new image ──────────────────────────────────────────────────────────
 echo "==> Pulling image ${DOCKERHUB_USERNAME}/love6202-backend:${IMAGE_TAG}"
 IMAGE_TAG="$IMAGE_TAG" DOCKERHUB_USERNAME="$DOCKERHUB_USERNAME" \
-    docker compose -f "$COMPOSE_FILE" pull backend
+    docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" pull backend
 
 # ── Restart backend with new image ─────────────────────────────────────────
 echo "==> Restarting love6202-backend-dev"
 IMAGE_TAG="$IMAGE_TAG" DOCKERHUB_USERNAME="$DOCKERHUB_USERNAME" \
-    docker compose -f "$COMPOSE_FILE" up -d --no-deps backend
+    docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --no-deps backend
 
 # ── Health check ────────────────────────────────────────────────────────────
 echo "==> Waiting for love6202-backend-dev to become healthy..."
