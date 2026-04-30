@@ -3,7 +3,7 @@
 set -euo pipefail
 
 CONTAINER=${1:?container name required}
-RETRIES=${2:-10}
+RETRIES=${2:-20}
 INTERVAL=${3:-5}
 
 echo "Health-checking $CONTAINER (max ${RETRIES} retries, ${INTERVAL}s interval)..."

@@ -17,6 +17,9 @@ echo "==> Ensuring postgres and redis are running"
 IMAGE_TAG="$IMAGE_TAG" DOCKERHUB_USERNAME="$DOCKERHUB_USERNAME" \
     docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d postgres redis
 
+echo "==> Waiting for postgres to become healthy..."
+"$APP_DIR/scripts/health-check.sh" love6202-postgres 20 3
+
 # ── Ensure nginx is running with latest config ───────────────────────────────
 echo "==> Ensuring nginx is up-to-date"
 IMAGE_TAG="$IMAGE_TAG" DOCKERHUB_USERNAME="$DOCKERHUB_USERNAME" \
@@ -47,7 +50,7 @@ IMAGE_TAG="$IMAGE_TAG" DOCKERHUB_USERNAME="$DOCKERHUB_USERNAME" \
 
 # ── Health check ────────────────────────────────────────────────────────────
 echo "==> Waiting for $NEW_CONTAINER to become healthy..."
-if ! "$APP_DIR/scripts/health-check.sh" "$NEW_CONTAINER" 12 5; then
+if ! "$APP_DIR/scripts/health-check.sh" "$NEW_CONTAINER" 20 5; then
     echo "✗ Health check failed — rolling back"
     docker stop "$NEW_CONTAINER" 2>/dev/null || true
     docker rm "$NEW_CONTAINER" 2>/dev/null || true
