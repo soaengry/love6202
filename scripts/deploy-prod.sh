@@ -60,7 +60,13 @@ fi
 
 # ── Switch nginx upstream (upstream 블록만 교체, HTTPS 설정 보존) ────────────
 echo "==> Switching nginx upstream to $NEW_CONTAINER"
-sed -i "s/server love6202-backend-[a-z]*:3000/server ${NEW_CONTAINER}:3000/" "$UPSTREAM_CONF"
+# sed -i 는 새 inode 파일로 교체하여 Docker bind mount가 구 inode를 계속 읽는 문제 발생.
+# tee 는 기존 inode에 덮어써서 nginx 컨테이너에서 즉시 반영됨.
+tee "$UPSTREAM_CONF" > /dev/null << UPSTREAM_EOF
+upstream backend {
+    server ${NEW_CONTAINER}:3000;
+}
+UPSTREAM_EOF
 
 docker exec love6202-nginx nginx -s reload
 echo "==> Nginx reloaded — traffic now routes to $NEW_CONTAINER"
