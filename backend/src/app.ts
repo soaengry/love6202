@@ -55,11 +55,6 @@ app.get("/health", (_req, res) => {
 // CSRF 토큰 발급 (프론트엔드가 상태 변경 요청 전 호출)
 app.get("/api/auth/csrf", issueCsrfToken);
 
-// Google OAuth2 콜백 → 프론트엔드로 code 전달
-app.get("/login/oauth2/code/google", (req, res) => {
-  const code = req.query.code as string;
-  res.redirect(`${env.FRONTEND_URL}/oauth2/callback?code=${encodeURIComponent(code)}`);
-});
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15분
