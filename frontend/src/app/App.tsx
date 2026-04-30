@@ -2,7 +2,7 @@ import { useEffect, type FC } from "react";
 import { AppRouter } from "./routes/AppRouter.tsx";
 import { useAuthStore } from "@/domain/auth/store/useAuthStore.ts";
 import { authApi } from "@/domain/auth/api/authApi.ts";
-import api from "@/global/api/axiosInstance.ts";
+import api, { setCsrfToken } from "@/global/api/axiosInstance.ts";
 
 export const App: FC = () => {
   const { setAuth, logout } = useAuthStore();
@@ -12,9 +12,10 @@ export const App: FC = () => {
     if (window.location.pathname.startsWith("/oauth2/")) return;
 
     const restoreAuth = async () => {
-      // CSRF 토큰 발급 (POST 요청 전 필수)
+      // CSRF 토큰 발급 — 응답 body에서 직접 읽어 메모리에 저장
       try {
-        await api.get("/auth/csrf");
+        const { data } = await api.get<{ csrfToken: string }>("/auth/csrf");
+        if (data?.csrfToken) setCsrfToken(data.csrfToken);
       } catch {
         // CSRF 실패해도 앱 진행
       }

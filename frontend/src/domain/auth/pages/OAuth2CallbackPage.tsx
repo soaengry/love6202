@@ -1,7 +1,7 @@
 import { useEffect, useRef, type FC } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import api from "@/global/api/axiosInstance.ts";
+import api, { setCsrfToken } from "@/global/api/axiosInstance.ts";
 import { authApi } from "../api/authApi.ts";
 import { useAuthStore } from "../store/useAuthStore.ts";
 import { getDeviceId } from "../auth.utils.ts";
@@ -27,7 +27,9 @@ export const OAuth2CallbackPage: FC = () => {
 
     const handleCallback = async () => {
       // App.tsx가 oauth2 경로에서 스킵되므로 여기서 직접 CSRF 발급
-      await api.get("/auth/csrf").catch(() => {});
+      // 응답 body에서 직접 읽어 메모리에 저장 (cross-subdomain cookie 읽기 불가)
+      const csrfRes = await api.get<{ csrfToken: string }>("/auth/csrf").catch(() => null);
+      if (csrfRes?.data?.csrfToken) setCsrfToken(csrfRes.data.csrfToken);
 
       try {
         const { data } = await authApi.login(code, getDeviceId());

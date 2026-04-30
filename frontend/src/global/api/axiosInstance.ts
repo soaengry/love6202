@@ -12,9 +12,15 @@ const api = axios.create({
   withCredentials: true,
 });
 
+// 메모리 저장 — document.cookie 크로스 서브도메인 읽기 불가 문제 우회
+let _csrfToken: string | null = null;
+
+export function setCsrfToken(token: string): void {
+  _csrfToken = token;
+}
+
 function getCsrfToken(): string | null {
-  const match = document.cookie.match(/(?:^| )csrf_token=([^;]+)/);
-  return match ? match[1] : null;
+  return _csrfToken;
 }
 
 api.interceptors.request.use((config) => {
