@@ -43,7 +43,6 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 app.use(ensureSession);
-app.use(verifyCsrf);
 
 // Health check
 app.get("/health", (_req, res) => {
@@ -72,15 +71,16 @@ const authLimiter = rateLimit({
   },
 });
 
+// auth 라우터는 OAuth2 코드 기반이므로 CSRF 불필요; 나머지는 CSRF 적용
 app.use("/api/auth", authLimiter, authRouter);
-app.use("/api/users", userRouter);
-app.use("/api/weddings", weddingRouter);
-app.use("/api/banks", bankRouter);
-app.use("/api/galleries", galleryRouter);
-app.use("/api/guestbooks", guestbookRouter);
-app.use("/api/uploads", uploadRouter);
-app.use("/api/admin", adminRouter);
-app.use("/api/rsvp", rsvpRouter);
+app.use("/api/users", verifyCsrf, userRouter);
+app.use("/api/weddings", verifyCsrf, weddingRouter);
+app.use("/api/banks", verifyCsrf, bankRouter);
+app.use("/api/galleries", verifyCsrf, galleryRouter);
+app.use("/api/guestbooks", verifyCsrf, guestbookRouter);
+app.use("/api/uploads", verifyCsrf, uploadRouter);
+app.use("/api/admin", verifyCsrf, adminRouter);
+app.use("/api/rsvp", verifyCsrf, rsvpRouter);
 
 app.use(errorHandler);
 
