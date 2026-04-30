@@ -23,7 +23,7 @@ echo "==> Waiting for postgres to become healthy..."
 # ── Ensure nginx is running with latest config ───────────────────────────────
 echo "==> Ensuring nginx is up-to-date"
 IMAGE_TAG="$IMAGE_TAG" DOCKERHUB_USERNAME="$DOCKERHUB_USERNAME" \
-    docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d nginx
+    docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --force-recreate nginx
 
 # ── Determine active/new color ─────────────────────────────────────────────
 ACTIVE_COLOR=$(cat "$ACTIVE_FILE" 2>/dev/null || echo "blue")
