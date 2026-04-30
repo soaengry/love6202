@@ -54,7 +54,8 @@ export async function changeUserRole(
   const [updated] = await prisma.$transaction([
     prisma.user.update({
       where: { id: targetUserId, version: targetUser.version },
-      data: { role: newRole, version: { increment: 1 } },
+      // tokenVersion 증가 → 기존 JWT 즉시 무효화 → 다음 요청 시 401 → 자동 로그아웃
+      data: { role: newRole, version: { increment: 1 }, tokenVersion: { increment: 1 } },
     }),
     prisma.auditLog.create({
       data: {
