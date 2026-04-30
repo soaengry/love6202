@@ -25,17 +25,21 @@ interface GoogleUserInfo {
 }
 
 async function getGoogleTokens(code: string): Promise<GoogleTokenResponse> {
-  const { data } = await axios.post<GoogleTokenResponse>(
-    "https://oauth2.googleapis.com/token",
-    {
-      code,
-      client_id: env.GOOGLE_CLIENT_ID,
-      client_secret: env.GOOGLE_CLIENT_SECRET,
-      redirect_uri: env.GOOGLE_REDIRECT_URI,
-      grant_type: "authorization_code",
-    },
-  );
-  return data;
+  try {
+    const { data } = await axios.post<GoogleTokenResponse>(
+      "https://oauth2.googleapis.com/token",
+      {
+        code,
+        client_id: env.GOOGLE_CLIENT_ID,
+        client_secret: env.GOOGLE_CLIENT_SECRET,
+        redirect_uri: env.GOOGLE_REDIRECT_URI,
+        grant_type: "authorization_code",
+      },
+    );
+    return data;
+  } catch {
+    throw AppError.from(UserErrorCode.AUTH_GOOGLE_FAILED);
+  }
 }
 
 async function getGoogleUserInfo(accessToken: string): Promise<GoogleUserInfo> {
