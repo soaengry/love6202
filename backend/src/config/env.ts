@@ -24,6 +24,7 @@ const envSchema = z.object({
   AWS_SECRET_KEY: z.string().optional(),
 
   FRONTEND_URL: z.string().default("http://localhost:3000"),
+  COOKIE_DOMAIN: z.string().optional(), // prod: .soaengry.com (cross-subdomain CSRF)
 
   KAKAO_REST_API_KEY: z.string().optional(),
 
