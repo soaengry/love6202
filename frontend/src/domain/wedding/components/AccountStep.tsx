@@ -11,7 +11,7 @@ import {
   IoAddCircleOutline,
   IoCloseCircleOutline,
 } from "react-icons/io5";
-import type { WeddingFormData } from "../types.ts";
+import type { WeddingFormData, PaymentMethod } from "../types.ts";
 import { weddingApi } from "../api/weddingApi.ts";
 import { SIDE_OPTIONS, PAYMENT_METHODS } from "../wedding.constants.ts";
 
@@ -101,7 +101,8 @@ export const AccountStep: FC<AccountStepProps> = ({
   };
 
   const getError = (index: number, field: string): string | undefined => {
-    return (errors.accounts as never)?.[index]?.[field]?.message;
+    const accountErrors = errors.accounts as Record<number, Record<string, { message?: string }>> | undefined;
+    return accountErrors?.[index]?.[field]?.message;
   };
 
   const renderBankForm = (index: number) => {

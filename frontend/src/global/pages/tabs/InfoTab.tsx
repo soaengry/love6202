@@ -19,7 +19,7 @@ interface InfoTabProps {
 
 const slideUp = {
   hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" as const } },
 };
 
 const kenBurns = {
@@ -27,7 +27,7 @@ const kenBurns = {
   visible: {
     opacity: 1,
     scale: 1,
-    transition: { duration: 1.2, ease: "easeOut" },
+    transition: { duration: 1.2, ease: "easeOut" as const },
   },
   exit: { opacity: 0, scale: 1.05, transition: { duration: 0.5 } },
 };
