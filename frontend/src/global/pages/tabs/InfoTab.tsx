@@ -22,15 +22,6 @@ const slideUp = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" as const } },
 };
 
-const kenBurns = {
-  hidden: { opacity: 0, scale: 1.1 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: { duration: 1.2, ease: "easeOut" as const },
-  },
-  exit: { opacity: 0, scale: 1.05, transition: { duration: 0.5 } },
-};
 
 const AnimatedSection: FC<{
   children: React.ReactNode;
@@ -102,23 +93,29 @@ const LandingSection: FC<InfoTabProps> = ({ data }) => {
     >
       {images.length > 0 ? (
         <div className="relative w-full h-full" style={{ minHeight: "85vh" }}>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={current}
-              variants={kenBurns}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className="absolute inset-0"
-            >
-              <img
-                src={images[current].imageUrl}
-                alt={`슬라이드 ${current + 1}`}
-                className="w-full h-full object-cover"
-                style={{ minHeight: "85vh" }}
-              />
-            </motion.div>
-          </AnimatePresence>
+          {images.map((img, i) => {
+            const isActive = i === current;
+            return (
+              <motion.div
+                key={img.imageUrl}
+                animate={{ opacity: isActive ? 1 : 0 }}
+                transition={{ duration: 1, ease: "easeInOut" }}
+                className="absolute inset-0"
+              >
+                {/* 활성화 시 key 교체 → Ken Burns 재시작. img 데이터는 브라우저 캐시 제공 */}
+                <motion.img
+                  key={isActive ? `active-${current}` : i}
+                  src={img.imageUrl}
+                  alt={`슬라이드 ${i + 1}`}
+                  className="w-full h-full object-cover"
+                  style={{ minHeight: "85vh" }}
+                  initial={{ scale: 1.08 }}
+                  animate={{ scale: 1.0 }}
+                  transition={{ duration: 6, ease: "easeOut" }}
+                />
+              </motion.div>
+            );
+          })}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20 pointer-events-none" />
         </div>
       ) : (
