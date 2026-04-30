@@ -3,6 +3,8 @@ import { Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "@/global/components/ProtectedRoute.tsx";
 import { MainLayout } from "@/global/components/MainLayout.tsx";
 import { HomePage } from "@/global/pages/HomePage.tsx";
+import { PrivacyPage } from "@/global/pages/PrivacyPage.tsx";
+import { TermsPage } from "@/global/pages/TermsPage.tsx";
 import { LoginPage } from "@/domain/auth/pages/LoginPage.tsx";
 import { OAuth2CallbackPage } from "@/domain/auth/pages/OAuth2CallbackPage.tsx";
 
@@ -32,6 +34,8 @@ export const AppRouter: FC = () => {
       {/* Public (no layout) */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/oauth2/callback" element={<OAuth2CallbackPage />} />
+      <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/terms" element={<TermsPage />} />
 
       {/* Main layout with BottomNav */}
       <Route element={<MainLayout />}>
