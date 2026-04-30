@@ -19,6 +19,9 @@ import { issueCsrfToken, verifyCsrf } from "@/middleware/csrf";
 
 const app = express();
 
+// nginx 프록시 뒤에서 실행되므로 X-Forwarded-For 신뢰
+app.set("trust proxy", 1);
+
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
