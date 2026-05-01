@@ -11,7 +11,7 @@ export const MainLayout: FC = () => {
   const [activeTab, setActiveTab] = useState<TabId>(initialTab);
 
   return (
-    <div className="min-h-screen bg-bg-secondary pb-16">
+    <div className="min-h-screen bg-bg-secondary pb-24">
       <Outlet context={{ activeTab, setActiveTab }} />
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
     </div>
