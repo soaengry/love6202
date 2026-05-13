@@ -756,11 +756,6 @@ export const InfoTab: FC<InfoTabProps> = ({ data }) => {
         <div className="w-16 h-px bg-primary/10" />
       </div>
 
-      <footer className="py-10 text-center">
-        <p className="footer-text text-[10px] tracking-[0.3em] text-text-muted uppercase">
-          Powered by Love 6202
-        </p>
-      </footer>
     </div>
   );
 };

@@ -7,6 +7,9 @@ import { getOrCreateWeddingFolder, uploadToDrive } from "@/service/googleDrive.s
 import prisma from "@/prisma";
 
 const connection = new Redis(env.REDIS_URL, { maxRetriesPerRequest: null });
+connection.on("error", (err) => {
+  console.warn("[DriveSync] Worker Redis connection error:", err.message);
+});
 
 export const driveSyncWorker = new Worker<DriveSyncJobData>(
   "drive-sync",
@@ -30,3 +33,6 @@ export const driveSyncWorker = new Worker<DriveSyncJobData>(
     concurrency: 3,
   },
 );
+driveSyncWorker.on("error", (err) => {
+  console.warn("[DriveSync] Worker error:", err.message);
+});

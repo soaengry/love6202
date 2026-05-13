@@ -61,17 +61,19 @@ export async function uploadImages(
   // Drive 동기화 잡 큐잉 (uploadId를 jobId로 사용해 삭제 시 취소 가능)
   await Promise.all(
     uploads.map((upload, i) =>
-      driveSyncQueue.add(
-        "sync",
-        {
-          uploadId: upload.id,
-          s3Key: s3Results[i].s3Key,
-          originalName: s3Results[i].originalname,
-          mimeType: s3Results[i].mimetype,
-          weddingId,
-        },
-        { jobId: `upload-${upload.id}` },
-      ),
+      driveSyncQueue
+        .add(
+          "sync",
+          {
+            uploadId: upload.id,
+            s3Key: s3Results[i].s3Key,
+            originalName: s3Results[i].originalname,
+            mimeType: s3Results[i].mimetype,
+            weddingId,
+          },
+          { jobId: `upload-${upload.id}` },
+        )
+        .catch((err) => console.warn("[DriveSync] Failed to enqueue job:", err.message)),
     ),
   );
 
@@ -116,7 +118,7 @@ export async function deleteUpload(
     await deleteFromDrive(upload.driveFileId).catch(() => {});
   } else {
     // Drive 동기화 대기 중 → 큐에서 잡 취소
-    const job = await driveSyncQueue.getJob(`upload-${id}`);
+    const job = await driveSyncQueue.getJob(`upload-${id}`).catch(() => null);
     await job?.remove().catch(() => {});
   }
 

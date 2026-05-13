@@ -11,6 +11,9 @@ export interface DriveSyncJobData {
 }
 
 const connection = new Redis(env.REDIS_URL, { maxRetriesPerRequest: null });
+connection.on("error", (err) => {
+  console.warn("[DriveSync] Redis connection error:", err.message);
+});
 
 export const driveSyncQueue = new Queue<DriveSyncJobData>("drive-sync", {
   connection,
@@ -20,4 +23,7 @@ export const driveSyncQueue = new Queue<DriveSyncJobData>("drive-sync", {
     removeOnComplete: 100,
     removeOnFail: 500,
   },
+});
+driveSyncQueue.on("error", (err) => {
+  console.warn("[DriveSync] Queue error:", err.message);
 });
