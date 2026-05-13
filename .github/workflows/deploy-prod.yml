@@ -74,9 +74,9 @@ jobs:
       - name: Build
         working-directory: frontend
         env:
-          VITE_API_BASE_URL: https://love6202.api.soaengry.com
+          VITE_API_BASE_URL: https://api.love6202.cloud
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
-          VITE_GOOGLE_REDIRECT_URI: https://love6202.soaengry.com/oauth2/callback
+          VITE_GOOGLE_REDIRECT_URI: https://love6202.cloud/oauth2/callback
           VITE_KAKAO_MAP_KEY: ${{ secrets.VITE_KAKAO_MAP_KEY }}
           VITE_S3_BASE_URL: ${{ secrets.VITE_S3_BASE_URL }}
         run: npm run build
