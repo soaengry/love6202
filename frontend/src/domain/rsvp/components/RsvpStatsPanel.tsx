@@ -13,8 +13,10 @@ interface StatTileProps {
 
 const StatTile: FC<StatTileProps> = ({ label, value, unit = "명" }) => (
   <div className="stat-tile flex flex-col items-center justify-center bg-surface border border-border-light rounded-xl py-4 px-3">
-    <p className="stat-value text-2xl font-bold text-primary">{value}</p>
-    <p className="stat-unit text-xs text-text-tertiary mt-0.5">{unit}</p>
+    <div className="flex items-baseline gap-0.5">
+      <p className="stat-value text-2xl font-bold text-primary">{value}</p>
+      <p className="stat-unit text-xs text-text-tertiary">{unit}</p>
+    </div>
     <p className="stat-label text-[11px] text-text-secondary mt-1">{label}</p>
   </div>
 );

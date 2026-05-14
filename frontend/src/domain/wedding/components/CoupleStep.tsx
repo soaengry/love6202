@@ -38,7 +38,7 @@ export const CoupleStep: FC<CoupleStepProps> = ({
 
         return (
           <div key={label} className="bg-bg-secondary rounded-xl p-4 space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3">
               <h3 className="font-medium text-text-primary">{label} 정보</h3>
               <SingleImageUploader
                 image={imageFile}
@@ -67,7 +67,7 @@ export const CoupleStep: FC<CoupleStepProps> = ({
             </div>
 
             {/* 연락처 / 이메일 */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium text-text-primary mb-1">연락처</label>
                 <input

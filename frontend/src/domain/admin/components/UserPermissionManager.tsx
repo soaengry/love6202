@@ -42,7 +42,7 @@ export const UserPermissionManager: FC = () => {
 
   return (
     <div className="user-permission-manager">
-      <div className="search-bar flex gap-2 mb-4">
+      <div className="search-bar flex flex-col sm:flex-row gap-2 mb-4">
         <input
           type="text"
           value={query}
@@ -54,9 +54,10 @@ export const UserPermissionManager: FC = () => {
         <button
           onClick={handleSearch}
           disabled={isSearching}
-          className="search-button px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors cursor-pointer disabled:opacity-50"
+          className="search-button flex items-center justify-center gap-1.5 px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors cursor-pointer disabled:opacity-50"
         >
           <IoSearchOutline className="text-lg" />
+          검색
         </button>
       </div>
 
