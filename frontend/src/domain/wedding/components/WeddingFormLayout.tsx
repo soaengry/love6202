@@ -113,7 +113,7 @@ export const WeddingFormLayout: FC<WeddingFormLayoutProps> = ({
           {step < totalSteps - 1 ? (
             <button
               type="button"
-              onClick={onNext}
+              onClick={() => onNext()}
               className="flex-1 py-3 bg-primary text-white font-medium rounded-xl hover:bg-primary-dark transition-colors cursor-pointer flex items-center justify-center gap-1"
             >
               다음
