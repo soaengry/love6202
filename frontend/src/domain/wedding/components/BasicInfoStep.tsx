@@ -148,7 +148,7 @@ export const BasicInfoStep: FC<BasicInfoStepProps> = ({ register, errors, heroIm
         <label htmlFor="venueAddress" className="block text-sm font-medium text-text-primary mb-1.5">
           예식장 주소 <span className="text-error">*</span>
         </label>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <input
             id="venueAddress"
             {...register("wedding.venueAddress")}
