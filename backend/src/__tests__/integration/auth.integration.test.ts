@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import request from "supertest";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
 
 // ── 모킹 선언 ────────────────────────────────────────────
 const prismaMock = {
@@ -16,9 +17,11 @@ const redisMock = {
   setex: vi.fn().mockResolvedValue("OK"),
   get: vi.fn(),
   del: vi.fn().mockResolvedValue(1),
-  keys: vi.fn().mockResolvedValue([]),
+  scan: vi.fn().mockResolvedValue(["0", []]),
   ttl: vi.fn().mockResolvedValue(86400),
   publish: vi.fn().mockResolvedValue(1),
+  sismember: vi.fn().mockResolvedValue(0),
+  sadd: vi.fn().mockResolvedValue(1),
 };
 
 vi.mock("@/prisma", () => ({ default: prismaMock }));
@@ -74,7 +77,7 @@ const mockUser = {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  redisMock.keys.mockResolvedValue([]);
+  redisMock.scan.mockResolvedValue(["0", []]);
   redisMock.setex.mockResolvedValue("OK");
   redisMock.del.mockResolvedValue(1);
 });
@@ -164,9 +167,8 @@ describe("POST /api/auth/login", () => {
 describe("POST /api/auth/refresh", () => {
   it("유효한 refresh 쿠키 → 200, 새 토큰 set-cookie", async () => {
     const refreshToken = makeRefreshToken();
-    redisMock.get.mockResolvedValue(
-      require("crypto").createHash("sha256").update(refreshToken).digest("hex"),
-    );
+    const hashed = await bcrypt.hash(refreshToken, 1);
+    redisMock.get.mockResolvedValue(hashed);
     prismaMock.user.findFirst.mockResolvedValue(mockUser);
 
     const res = await request(app)
@@ -200,12 +202,11 @@ describe("POST /api/auth/refresh", () => {
 
   it("tokenVersion 불일치 → 401, 모든 토큰 삭제", async () => {
     const refreshToken = makeRefreshToken({ tokenVersion: 0 });
-    redisMock.get.mockResolvedValue(
-      require("crypto").createHash("sha256").update(refreshToken).digest("hex"),
-    );
+    const hashed = await bcrypt.hash(refreshToken, 1);
+    redisMock.get.mockResolvedValue(hashed);
     // DB의 tokenVersion은 1 (변경됨)
     prismaMock.user.findFirst.mockResolvedValue({ ...mockUser, tokenVersion: 1 });
-    redisMock.keys.mockResolvedValue(["refresh:1:device-1"]);
+    redisMock.scan.mockResolvedValue(["0", ["refresh:1:device-1"]]);
 
     const res = await request(app)
       .post("/api/auth/refresh")
