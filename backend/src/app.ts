@@ -58,7 +58,7 @@ app.get("/api/auth/csrf", issueCsrfToken);
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15분
-  max: env.NODE_ENV === "test" ? 10_000 : 10,
+  max: env.NODE_ENV === "production" ? 10 : 10_000,
   standardHeaders: true,
   legacyHeaders: false,
   handler: (_req, res) => {
