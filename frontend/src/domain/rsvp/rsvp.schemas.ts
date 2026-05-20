@@ -8,7 +8,7 @@ export const rsvpFormSchema = z.object({
   phone: z
     .string()
     .min(1, "연락처를 입력해주세요")
-    .regex(/^\d{2,3}-\d{3,4}-\d{4}$/, "올바른 연락처 형식을 입력해주세요 (예: 010-0000-0000)"),
+    .regex(/^\d{9,11}$/, "올바른 연락처를 입력해주세요"),
   attendeeCount: z
     .number()
     .int()

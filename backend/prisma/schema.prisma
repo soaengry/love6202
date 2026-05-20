@@ -91,6 +91,7 @@ model Wedding {
   parkingInfo  String?   @db.Text
   mealInfo     String?   @db.Text
   greeting     String?   @db.Text
+  isPinned     Boolean   @default(false)
   version      Int       @default(0)
   deletedAt    DateTime? @db.Timestamptz
   createdAt    DateTime  @default(now()) @db.Timestamptz

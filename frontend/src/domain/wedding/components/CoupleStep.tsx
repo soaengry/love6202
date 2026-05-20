@@ -1,11 +1,14 @@
 import type { FC } from "react";
-import type { UseFormRegister, FieldErrors } from "react-hook-form";
+import { Controller } from "react-hook-form";
+import type { UseFormRegister, FieldErrors, Control } from "react-hook-form";
 import type { WeddingFormData } from "../types.ts";
 import { COUPLE_SECTIONS } from "../wedding.constants.ts";
 import { SingleImageUploader } from "./ImageUploader.tsx";
+import { formatPhoneDisplay } from "../wedding.utils.ts";
 
 interface CoupleStepProps {
   register: UseFormRegister<WeddingFormData>;
+  control: Control<WeddingFormData>;
   errors: FieldErrors<WeddingFormData>;
   groomProfileImage: File | null;
   brideProfileImage: File | null;
@@ -18,6 +21,7 @@ interface CoupleStepProps {
 
 export const CoupleStep: FC<CoupleStepProps> = ({
   register,
+  control,
   errors,
   groomProfileImage,
   brideProfileImage,
@@ -70,10 +74,21 @@ export const CoupleStep: FC<CoupleStepProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium text-text-primary mb-1">연락처</label>
-                <input
-                  {...register(`couples.${index}.contact`)}
-                  placeholder="010-0000-0000"
-                  className="w-full px-4 py-3 border border-border rounded-xl bg-bg-primary text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+                <Controller
+                  name={`couples.${index}.contact`}
+                  control={control}
+                  render={({ field }) => (
+                    <input
+                      value={formatPhoneDisplay(field.value ?? "")}
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
+                        field.onChange(digits);
+                      }}
+                      inputMode="numeric"
+                      placeholder="010-0000-0000"
+                      className="w-full px-4 py-3 border border-border rounded-xl bg-bg-primary text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+                    />
+                  )}
                 />
               </div>
               <div>

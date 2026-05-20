@@ -11,3 +11,7 @@ export const changeRoleBodySchema = z.object({
 export const userIdParamSchema = z.object({
   id: z.coerce.number().int().positive(),
 });
+
+export const weddingIdParamSchema = z.object({
+  id: z.coerce.number().int().positive(),
+});

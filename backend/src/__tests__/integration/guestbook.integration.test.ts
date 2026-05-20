@@ -35,12 +35,13 @@ const redisMock = {
 vi.mock("@/prisma", () => ({ default: prismaMock }));
 vi.mock("@/config/redis", () => ({ default: redisMock }));
 vi.mock("ioredis", () => ({
-  default: vi.fn().mockImplementation(() => redisMock),
+  default: vi.fn().mockImplementation(function () { return redisMock; }),
 }));
 
 const app = (await import("@/app")).default;
 
 const TEST_SECRET = "test-jwt-secret-for-testing-only";
+const CSRF = "test-csrf-token";
 
 function makeHostToken(userId = 1, weddingId = 10) {
   return jwt.sign(
@@ -80,12 +81,16 @@ describe("POST /api/guestbooks", () => {
     prismaMock.wedding.findUnique.mockResolvedValue(mockWedding);
     prismaMock.guestbook.create.mockResolvedValue(mockGuestbookEntry);
 
-    const res = await request(app).post("/api/guestbooks").send({
-      weddingId: 10,
-      name: "홍길동",
-      content: "축하드립니다!",
-      type: "post_01",
-    });
+    const res = await request(app)
+      .post("/api/guestbooks")
+      .set("Cookie", `csrf_token=${CSRF}`)
+      .set("x-csrf-token", CSRF)
+      .send({
+        weddingId: 10,
+        name: "홍길동",
+        content: "축하드립니다!",
+        type: "post_01",
+      });
 
     expect(res.status).toBe(201);
     expect(res.body.data.name).toBe("홍길동");
@@ -98,35 +103,47 @@ describe("POST /api/guestbooks", () => {
   it("존재하지 않는 초대장 → 404", async () => {
     prismaMock.wedding.findUnique.mockResolvedValue(null);
 
-    const res = await request(app).post("/api/guestbooks").send({
-      weddingId: 999,
-      name: "홍길동",
-      content: "축하드립니다!",
-      type: "post_01",
-    });
+    const res = await request(app)
+      .post("/api/guestbooks")
+      .set("Cookie", `csrf_token=${CSRF}`)
+      .set("x-csrf-token", CSRF)
+      .send({
+        weddingId: 999,
+        name: "홍길동",
+        content: "축하드립니다!",
+        type: "post_01",
+      });
 
     expect(res.status).toBe(404);
   });
 
   it("필수 필드 누락 → 400 (validation)", async () => {
-    const res = await request(app).post("/api/guestbooks").send({
-      weddingId: 10,
-      // name 누락
-      content: "축하드립니다!",
-      type: "post_01",
-    });
+    const res = await request(app)
+      .post("/api/guestbooks")
+      .set("Cookie", `csrf_token=${CSRF}`)
+      .set("x-csrf-token", CSRF)
+      .send({
+        weddingId: 10,
+        // name 누락
+        content: "축하드립니다!",
+        type: "post_01",
+      });
 
     expect(res.status).toBe(400);
     expect(redisMock.publish).not.toHaveBeenCalled();
   });
 
   it("content 빈 문자열 → 400 (validation)", async () => {
-    const res = await request(app).post("/api/guestbooks").send({
-      weddingId: 10,
-      name: "홍길동",
-      content: "",
-      type: "post_01",
-    });
+    const res = await request(app)
+      .post("/api/guestbooks")
+      .set("Cookie", `csrf_token=${CSRF}`)
+      .set("x-csrf-token", CSRF)
+      .send({
+        weddingId: 10,
+        name: "홍길동",
+        content: "",
+        type: "post_01",
+      });
 
     expect(res.status).toBe(400);
   });
@@ -180,7 +197,8 @@ describe("DELETE /api/guestbooks/:id", () => {
 
     const res = await request(app)
       .delete("/api/guestbooks/1")
-      .set("Cookie", `access_token=${hostToken}`);
+      .set("Cookie", `access_token=${hostToken}; csrf_token=${CSRF}`)
+      .set("x-csrf-token", CSRF);
 
     expect(res.status).toBe(200);
     expect(prismaMock.guestbook.delete).toHaveBeenCalledWith({ where: { id: 1 } });
@@ -201,7 +219,8 @@ describe("DELETE /api/guestbooks/:id", () => {
 
     const res = await request(app)
       .delete("/api/guestbooks/1")
-      .set("Cookie", `access_token=${hostToken}`);
+      .set("Cookie", `access_token=${hostToken}; csrf_token=${CSRF}`)
+      .set("x-csrf-token", CSRF);
 
     expect(res.status).toBe(403);
     expect(prismaMock.guestbook.delete).not.toHaveBeenCalled();
@@ -219,7 +238,8 @@ describe("DELETE /api/guestbooks/:id", () => {
 
     const res = await request(app)
       .delete("/api/guestbooks/1")
-      .set("Cookie", `access_token=${adminToken}`);
+      .set("Cookie", `access_token=${adminToken}; csrf_token=${CSRF}`)
+      .set("x-csrf-token", CSRF);
 
     expect(res.status).toBe(200);
   });
@@ -230,13 +250,17 @@ describe("DELETE /api/guestbooks/:id", () => {
 
     const res = await request(app)
       .delete("/api/guestbooks/999")
-      .set("Cookie", `access_token=${adminToken}`);
+      .set("Cookie", `access_token=${adminToken}; csrf_token=${CSRF}`)
+      .set("x-csrf-token", CSRF);
 
     expect(res.status).toBe(404);
   });
 
   it("인증 없음 → 401", async () => {
-    const res = await request(app).delete("/api/guestbooks/1");
+    const res = await request(app)
+      .delete("/api/guestbooks/1")
+      .set("Cookie", `csrf_token=${CSRF}`)
+      .set("x-csrf-token", CSRF);
 
     expect(res.status).toBe(401);
   });
