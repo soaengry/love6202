@@ -1,5 +1,16 @@
 import type { AccountFormData, WeddingFormData, WeddingDetailResponse } from "./types.ts";
 
+export function formatPhoneDisplay(digits: string): string {
+  if (digits.startsWith("02")) {
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 6) return `${digits.slice(0, 2)}-${digits.slice(2)}`;
+    return `${digits.slice(0, 2)}-${digits.slice(2, 6)}-${digits.slice(6, 10)}`;
+  }
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7, 11)}`;
+}
+
 // ISO 날짜 문자열을 datetime-local 입력값 형식(YYYY-MM-DDTHH:mm)으로 변환
 export function formatDateToLocal(isoDate: string): string {
   const d = new Date(isoDate);
@@ -54,7 +65,7 @@ export function toWeddingFormData(res: WeddingDetailResponse): WeddingFormData {
       role: c.role,
       name: c.name,
       email: c.email ?? "",
-      contact: c.contact ?? "",
+      contact: (c.contact ?? "").replace(/\D/g, ""),
       fatherName: c.fatherName ?? "",
       isFatherAlive: c.isFatherAlive,
       motherName: c.motherName ?? "",
@@ -67,7 +78,7 @@ export function toWeddingFormData(res: WeddingDetailResponse): WeddingFormData {
       accountNumber: a.accountNumber ?? "",
       accountHolder: a.accountHolder,
       kakaoPayUrl: a.kakaoPayUrl ?? "",
-      tossNumber: a.tossNumber ?? "",
+      tossNumber: (a.tossNumber ?? "").replace(/\D/g, ""),
       orderIndex: a.orderIndex,
       paymentType:
         a.bankCode === "KAKAOPAY" ? "KAKAOPAY"

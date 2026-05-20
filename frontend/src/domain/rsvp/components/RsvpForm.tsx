@@ -17,6 +17,17 @@ interface RsvpFormProps {
   onCancel?: () => void;
 }
 
+const formatPhoneDisplay = (digits: string): string => {
+  if (digits.startsWith("02")) {
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 6) return `${digits.slice(0, 2)}-${digits.slice(2)}`;
+    return `${digits.slice(0, 2)}-${digits.slice(2, 6)}-${digits.slice(6, 10)}`;
+  }
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7, 11)}`;
+};
+
 const slideDown = {
   hidden: { height: 0, opacity: 0 },
   visible: { height: "auto", opacity: 1, transition: { duration: 0.2 } },
@@ -104,7 +115,7 @@ export const RsvpForm: FC<RsvpFormProps> = ({
           attendance: existingRsvp.attendance,
           name: existingRsvp.name,
           side: existingRsvp.side,
-          phone: existingRsvp.phone,
+          phone: existingRsvp.phone.replace(/\D/g, ""),
           attendeeCount: existingRsvp.attendeeCount,
           meal: existingRsvp.meal,
           shuttle: existingRsvp.shuttle,
@@ -262,10 +273,21 @@ export const RsvpForm: FC<RsvpFormProps> = ({
             {/* 연락처 */}
             <div className="form-section space-y-2">
               <label className="form-label text-sm font-semibold text-text-primary">연락처 *</label>
-              <input
-                {...register("phone")}
-                placeholder="참석자 대표 연락처 (예: 010-0000-0000)"
-                className="form-input w-full px-4 py-3 rounded-xl border border-border bg-surface text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-primary transition-colors"
+              <Controller
+                name="phone"
+                control={control}
+                render={({ field }) => (
+                  <input
+                    value={formatPhoneDisplay(field.value)}
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
+                      field.onChange(digits);
+                    }}
+                    inputMode="numeric"
+                    placeholder="010-0000-0000"
+                    className="form-input w-full px-4 py-3 rounded-xl border border-border bg-surface text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-primary transition-colors"
+                  />
+                )}
               />
               {errors.phone && (
                 <p className="error-msg text-xs text-red-500">{errors.phone.message}</p>

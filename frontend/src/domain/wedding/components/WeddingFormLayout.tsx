@@ -78,6 +78,7 @@ export const WeddingFormLayout: FC<WeddingFormLayoutProps> = ({
             {step === 1 && (
               <CoupleStep
                 register={register}
+                control={control}
                 errors={errors}
                 groomProfileImage={images.groomProfileImage}
                 brideProfileImage={images.brideProfileImage}

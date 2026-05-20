@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, type FC } from "react";
 import {
   useFieldArray,
+  Controller,
   type Control,
   type FieldErrors,
   type UseFormRegister,
@@ -14,6 +15,7 @@ import {
 import type { WeddingFormData, PaymentMethod } from "../types.ts";
 import { weddingApi } from "../api/weddingApi.ts";
 import { SIDE_OPTIONS, PAYMENT_METHODS } from "../wedding.constants.ts";
+import { formatPhoneDisplay } from "../wedding.utils.ts";
 
 interface AccountStepProps {
   control: Control<WeddingFormData>;
@@ -92,8 +94,9 @@ export const AccountStep: FC<AccountStepProps> = ({
   };
 
   const handleAccountNumberChange = (index: number, value: string) => {
-    setValue(`accounts.${index}.accountNumber`, value);
-    detectBank(index, value);
+    const digits = value.replace(/\D/g, "");
+    setValue(`accounts.${index}.accountNumber`, digits);
+    detectBank(index, digits);
   };
 
   const getPaymentType = (index: number): PaymentMethod => {
@@ -120,6 +123,7 @@ export const AccountStep: FC<AccountStepProps> = ({
           <input
             value={account?.accountNumber ?? ""}
             onChange={(e) => handleAccountNumberChange(index, e.target.value)}
+            inputMode="numeric"
             placeholder="계좌번호를 입력하면 은행이 자동 감지됩니다"
             className={accountNumberError ? inputErrorClass : inputClass}
           />
@@ -215,10 +219,21 @@ export const AccountStep: FC<AccountStepProps> = ({
         </div>
         <div>
           <label className={labelClass}>토스 ID (전화번호)</label>
-          <input
-            {...register(`accounts.${index}.tossNumber`)}
-            placeholder="010-1234-5678"
-            className={tossError ? inputErrorClass : inputClass}
+          <Controller
+            name={`accounts.${index}.tossNumber`}
+            control={control}
+            render={({ field }) => (
+              <input
+                value={formatPhoneDisplay(field.value ?? "")}
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
+                  field.onChange(digits);
+                }}
+                inputMode="numeric"
+                placeholder="010-1234-5678"
+                className={tossError ? inputErrorClass : inputClass}
+              />
+            )}
           />
           {tossError && <p className={errorMsgClass}>{tossError}</p>}
         </div>

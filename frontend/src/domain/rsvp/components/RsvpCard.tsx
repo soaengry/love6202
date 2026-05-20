@@ -10,6 +10,16 @@ const attendanceLabel: Record<RsvpAttendance, { label: string; className: string
   NO: { label: "불참", className: "bg-bg-tertiary text-text-tertiary" },
 };
 
+const formatPhone = (phone: string): string => {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("02")) {
+    if (digits.length <= 6) return digits.replace(/(\d{2})(\d+)/, "$1-$2");
+    return digits.replace(/(\d{2})(\d{4})(\d+)/, "$1-$2-$3");
+  }
+  if (digits.length <= 7) return digits.replace(/(\d{3})(\d+)/, "$1-$2");
+  return digits.replace(/(\d{3})(\d{4})(\d+)/, "$1-$2-$3");
+};
+
 const sideLabel: Record<RsvpSide, string> = {
   BRIDE: "신부측",
   GROOM: "신랑측",
@@ -38,7 +48,7 @@ export const RsvpCard: FC<RsvpCardProps> = ({ rsvp }) => {
       </div>
 
       {/* 연락처 */}
-      <p className="rsvp-phone text-xs text-text-secondary">{rsvp.phone}</p>
+      <p className="rsvp-phone text-xs text-text-secondary">{formatPhone(rsvp.phone)}</p>
 
       {/* 인원 정보 */}
       {rsvp.attendance === "YES" && (
