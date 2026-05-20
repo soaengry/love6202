@@ -25,7 +25,7 @@ export const MyPage: FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const { myWedding, hasWedding } = useMyWedding();
-  const adminWeddings = useAdminWeddings(user?.role === "ADMIN");
+  const { adminWeddings, updateWedding } = useAdminWeddings(user?.role === "ADMIN");
 
   const handleLogout = async () => {
     try {
@@ -119,7 +119,7 @@ export const MyPage: FC = () => {
               {adminWeddings.length > 0 ? (
                 <div className="admin-wedding-list grid gap-3">
                   {adminWeddings.map((w) => (
-                    <WeddingCard key={w.id} wedding={w} />
+                    <WeddingCard key={w.id} wedding={w} onPinChange={updateWedding} />
                   ))}
                 </div>
               ) : (

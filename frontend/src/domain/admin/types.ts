@@ -4,6 +4,7 @@ export interface AdminWeddingListItem {
   weddingDate: string;
   venueName: string;
   coupleNames: string;
+  isPinned: boolean;
   createdAt: string;
 }
 

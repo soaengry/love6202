@@ -7,6 +7,10 @@ export const adminApi = {
     return api.get<AdminWeddingListItem[]>(ADMIN_API.WEDDINGS);
   },
 
+  pinWedding(id: number) {
+    return api.patch<AdminWeddingListItem>(ADMIN_API.PIN_WEDDING(id));
+  },
+
   searchUsers(query: string) {
     return api.get<AdminUserSearchResult[]>(ADMIN_API.SEARCH_USERS, {
       params: { query },

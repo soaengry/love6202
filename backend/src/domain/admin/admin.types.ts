@@ -8,6 +8,7 @@ export interface AdminWeddingListItem {
   weddingDate: Date;
   venueName: string;
   coupleNames: string;
+  isPinned: boolean;
   createdAt: Date;
 }
 
@@ -36,6 +37,7 @@ export function toAdminWeddingListItem(w: WeddingWithCouples): AdminWeddingListI
     weddingDate: w.weddingDate,
     venueName: w.venueName,
     coupleNames,
+    isPinned: w.isPinned,
     createdAt: w.createdAt,
   };
 }

@@ -283,11 +283,17 @@ export async function updateWedding(
 // ─── Read ───────────────────────────────────────────────
 
 export async function getLatestWedding(): Promise<WeddingDetailResponse> {
-  const wedding = await prisma.wedding.findFirst({
+  const pinned = await prisma.wedding.findFirst({
+    where: { deletedAt: null, isPinned: true },
+    include: WEDDING_INCLUDE,
+  });
+
+  const wedding = pinned ?? await prisma.wedding.findFirst({
     where: { deletedAt: null },
     orderBy: { id: "desc" },
     include: WEDDING_INCLUDE,
   });
+
   if (!wedding) throw AppError.from(WeddingErrorCode.WEDDING_NOT_FOUND);
 
   await resolveGeocode(wedding);

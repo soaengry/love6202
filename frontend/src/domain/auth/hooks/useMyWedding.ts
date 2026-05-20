@@ -25,7 +25,7 @@ export function useMyWedding(): UseMyWeddingResult {
           .sort((a: { role: string }) => (a.role === "GROOM" ? -1 : 1))
           .map((c: { name: string }) => c.name)
           .join(" & ");
-        setMyWedding({ id: w.id, title: w.title, weddingDate: w.weddingDate, venueName: w.venueName, coupleNames, createdAt: w.createdAt });
+        setMyWedding({ id: w.id, title: w.title, weddingDate: w.weddingDate, venueName: w.venueName, coupleNames, isPinned: false, createdAt: w.createdAt });
         setHasWedding(true);
       })
       .catch(() => setHasWedding(false));

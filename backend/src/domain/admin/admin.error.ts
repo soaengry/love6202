@@ -9,4 +9,9 @@ export const AdminErrorCode = {
     status: 400,
     message: "자신의 권한은 변경할 수 없습니다.",
   },
+  ADMIN_WEDDING_NOT_FOUND: {
+    code: "ADMIN_WEDDING_NOT_FOUND",
+    status: 404,
+    message: "청첩장을 찾을 수 없습니다.",
+  },
 } as const;

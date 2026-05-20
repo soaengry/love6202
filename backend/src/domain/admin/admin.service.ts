@@ -9,6 +9,29 @@ import {
   type AdminUserSearchResult,
 } from "./admin.types";
 
+
+export async function pinWedding(weddingId: number): Promise<AdminWeddingListItem> {
+  const wedding = await prisma.wedding.findFirst({
+    where: { id: weddingId, deletedAt: null },
+    include: { couples: true },
+  });
+  if (!wedding) throw AppError.from(AdminErrorCode.ADMIN_WEDDING_NOT_FOUND);
+
+  const updated = await prisma.$transaction(async (tx) => {
+    await tx.wedding.updateMany({
+      where: { isPinned: true, NOT: { id: weddingId } },
+      data: { isPinned: false },
+    });
+    return tx.wedding.update({
+      where: { id: weddingId },
+      data: { isPinned: !wedding.isPinned },
+      include: { couples: true },
+    });
+  });
+
+  return toAdminWeddingListItem(updated);
+}
+
 export async function getAllWeddings(): Promise<AdminWeddingListItem[]> {
   const weddings = await prisma.wedding.findMany({
     where: { deletedAt: null },
