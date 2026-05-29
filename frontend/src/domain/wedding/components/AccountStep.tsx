@@ -44,10 +44,14 @@ export const AccountStep: FC<AccountStepProps> = ({
   const accounts = useWatch({ control, name: "accounts" });
   const [detectingMap, setDetectingMap] = useState<Record<number, boolean>>({});
   const [banks, setBanks] = useState<BankResponse[]>([]);
+  const [banksLoading, setBanksLoading] = useState(true);
   const debounceTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
 
   useEffect(() => {
-    weddingApi.getBanks().then(({ data }) => setBanks(data)).catch(() => {});
+    weddingApi.getBanks()
+      .then(({ data }) => setBanks(data))
+      .catch(console.error)
+      .finally(() => setBanksLoading(false));
     return () => { Object.values(debounceTimers.current).forEach(clearTimeout); };
   }, []);
 
@@ -124,6 +128,12 @@ export const AccountStep: FC<AccountStepProps> = ({
           <input
             value={account?.accountNumber ?? ""}
             onChange={(e) => handleAccountNumberChange(index, e.target.value)}
+            onKeyDown={(e) => {
+              const passThrough = ["Backspace", "Delete", "Tab", "Escape", "Enter", "ArrowLeft", "ArrowRight", "Home", "End"];
+              if (!passThrough.includes(e.key) && !e.ctrlKey && !e.metaKey && !/^\d$/.test(e.key)) {
+                e.preventDefault();
+              }
+            }}
             inputMode="numeric"
             placeholder="계좌번호를 입력하면 은행이 자동 감지됩니다"
             className={accountNumberError ? inputErrorClass : inputClass}
@@ -133,19 +143,21 @@ export const AccountStep: FC<AccountStepProps> = ({
           )}
         </div>
 
-        <div className="flex items-center gap-2 min-h-[28px]">
-          {isDetecting ? (
-            <span className="text-xs text-text-secondary">은행 감지 중...</span>
-          ) : account?.bankName ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
-              {account.bankName}
-            </span>
-          ) : cleaned.length >= 3 ? (
-            <span className="text-xs text-error">
-              은행을 감지할 수 없습니다. 아래에서 선택해주세요.
-            </span>
-          ) : null}
-        </div>
+        {(isDetecting || account?.bankName || cleaned.length >= 3) && (
+          <div className="flex items-center gap-2">
+            {isDetecting ? (
+              <span className="text-xs text-text-secondary">은행 감지 중...</span>
+            ) : account?.bankName ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+                {account.bankName}
+              </span>
+            ) : (
+              <span className="text-xs text-error">
+                은행을 감지할 수 없습니다. 아래에서 선택해주세요.
+              </span>
+            )}
+          </div>
+        )}
 
         {!account?.bankName && cleaned.length >= 3 && !isDetecting && (
           <div>
@@ -159,9 +171,12 @@ export const AccountStep: FC<AccountStepProps> = ({
                   setValue(`accounts.${index}.bankCode`, selected.bankCode);
                 }
               }}
+              disabled={banksLoading}
               className={bankNameError ? inputErrorClass : inputClass}
             >
-              <option value="" disabled>은행을 선택해주세요</option>
+              <option value="" disabled>
+                {banksLoading ? "은행 목록 로딩 중..." : "은행을 선택해주세요"}
+              </option>
               {banks.map((bank) => (
                 <option key={bank.bankCode} value={bank.bankCode}>
                   {bank.bankName}
