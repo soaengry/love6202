@@ -24,7 +24,7 @@ export const WeddingCard: FC<WeddingCardProps> = ({ wedding, onPinChange }) => {
     setIsPinning(true);
     try {
       const { data: updated } = await adminApi.pinWedding(wedding.id);
-      onPinChange(updated);
+      onPinChange?.(updated);
       toast.success(updated.isPinned ? "메인에 고정되었습니다." : "고정이 해제되었습니다.");
     } catch {
       toast.error("고정 설정에 실패했습니다.");
