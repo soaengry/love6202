@@ -12,7 +12,7 @@ import {
   IoAddCircleOutline,
   IoCloseCircleOutline,
 } from "react-icons/io5";
-import type { WeddingFormData, PaymentMethod } from "../types.ts";
+import type { WeddingFormData, PaymentMethod, BankResponse } from "../types.ts";
 import { weddingApi } from "../api/weddingApi.ts";
 import { SIDE_OPTIONS, PAYMENT_METHODS } from "../wedding.constants.ts";
 import { formatPhoneDisplay } from "../wedding.utils.ts";
@@ -43,10 +43,11 @@ export const AccountStep: FC<AccountStepProps> = ({
   });
   const accounts = useWatch({ control, name: "accounts" });
   const [detectingMap, setDetectingMap] = useState<Record<number, boolean>>({});
+  const [banks, setBanks] = useState<BankResponse[]>([]);
   const debounceTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
 
-  // 언마운트 시 미실행 타이머 정리
   useEffect(() => {
+    weddingApi.getBanks().then(({ data }) => setBanks(data)).catch(() => {});
     return () => { Object.values(debounceTimers.current).forEach(clearTimeout); };
   }, []);
 
@@ -141,19 +142,32 @@ export const AccountStep: FC<AccountStepProps> = ({
             </span>
           ) : cleaned.length >= 3 ? (
             <span className="text-xs text-error">
-              은행을 감지할 수 없습니다. 직접 입력해주세요.
+              은행을 감지할 수 없습니다. 아래에서 선택해주세요.
             </span>
           ) : null}
         </div>
 
         {!account?.bankName && cleaned.length >= 3 && !isDetecting && (
           <div>
-            <label className={labelClass}>은행명</label>
-            <input
-              {...register(`accounts.${index}.bankName`)}
-              placeholder="○○은행"
+            <label className={labelClass}>은행 선택</label>
+            <select
+              defaultValue=""
+              onChange={(e) => {
+                const selected = banks.find((b) => b.bankCode === e.target.value);
+                if (selected) {
+                  setValue(`accounts.${index}.bankName`, selected.bankName);
+                  setValue(`accounts.${index}.bankCode`, selected.bankCode);
+                }
+              }}
               className={bankNameError ? inputErrorClass : inputClass}
-            />
+            >
+              <option value="" disabled>은행을 선택해주세요</option>
+              {banks.map((bank) => (
+                <option key={bank.bankCode} value={bank.bankCode}>
+                  {bank.bankName}
+                </option>
+              ))}
+            </select>
             {bankNameError && <p className={errorMsgClass}>{bankNameError}</p>}
           </div>
         )}
