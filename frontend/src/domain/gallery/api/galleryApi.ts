@@ -6,6 +6,7 @@ export const galleryApi = {
   upload(formData: FormData) {
     return api.post<GalleryImage[]>(GALLERY_API.BASE, formData, {
       headers: { "Content-Type": "multipart/form-data" },
+      timeout: 300_000, // 파일당 S3 3회 업로드 + sharp 처리 → 최대 5분
     });
   },
 
