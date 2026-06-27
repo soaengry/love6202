@@ -83,16 +83,24 @@ export async function getGalleries(
 
 export async function deleteGalleries(
   userId: number,
+  userRole: string,
   ids: number[],
 ): Promise<void> {
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user?.weddingId) {
-    throw AppError.from(GalleryErrorCode.GALLERY_WEDDING_NOT_FOUND);
-  }
+  let galleries: { id: number; imageUrl: string; thumbnailUrl: string | null }[];
 
-  const galleries = await prisma.gallery.findMany({
-    where: { id: { in: ids }, weddingId: user.weddingId },
-  });
+  if (userRole === "ADMIN") {
+    galleries = await prisma.gallery.findMany({
+      where: { id: { in: ids } },
+    });
+  } else {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user?.weddingId) {
+      throw AppError.from(GalleryErrorCode.GALLERY_WEDDING_NOT_FOUND);
+    }
+    galleries = await prisma.gallery.findMany({
+      where: { id: { in: ids }, weddingId: user.weddingId },
+    });
+  }
 
   if (galleries.length === 0) {
     throw AppError.from(GalleryErrorCode.GALLERY_NOT_FOUND);

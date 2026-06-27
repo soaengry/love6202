@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { AppError } from "@/util/appError";
 import { ZodError } from "zod";
+import multer from "multer";
 
 export function errorHandler(
   err: Error,
@@ -8,6 +9,16 @@ export function errorHandler(
   res: Response,
   next: NextFunction,
 ) {
+  if (err instanceof multer.MulterError) {
+    const message = err.code === "LIMIT_FILE_SIZE"
+      ? "파일 크기가 너무 큽니다. (최대 50MB)"
+      : "파일 업로드에 실패했습니다.";
+    return res.status(400).json({
+      status: { code: 400, message },
+      data: null,
+    });
+  }
+
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({
       status: { code: err.statusCode, message: err.message },

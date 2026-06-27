@@ -61,7 +61,7 @@ router.delete(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { ids } = req.body as { ids: number[] };
-      await galleryService.deleteGalleries(req.userId!, ids);
+      await galleryService.deleteGalleries(req.userId!, req.userRole!, ids);
       res.json(apiResponse.ok("갤러리 삭제 성공", null));
     } catch (err) {
       next(err);
