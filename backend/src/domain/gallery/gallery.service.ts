@@ -29,10 +29,11 @@ export async function uploadImages(
   });
   let nextOrder = (maxOrder._max.orderIndex ?? -1) + 1;
 
-  // S3 업로드 (원본 + 썸네일)
-  const uploadResults = await Promise.all(
-    files.map((file) => uploadImageWithThumbnail(file)),
-  );
+  // S3 업로드 (원본 + 썸네일) — 순차 처리로 메모리 peak 제한
+  const uploadResults: { imageUrl: string; thumbnailUrl: string; originalKey: string }[] = [];
+  for (const file of files) {
+    uploadResults.push(await uploadImageWithThumbnail(file));
+  }
 
   // DB 저장
   const galleries = await prisma.$transaction(
