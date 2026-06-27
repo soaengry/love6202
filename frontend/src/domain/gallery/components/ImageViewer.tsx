@@ -1,7 +1,7 @@
-import { useState, useCallback, type FC } from "react";
+import { useState, useCallback, useEffect, type FC } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { IoCloseOutline, IoTrashOutline } from "react-icons/io5";
+import { IoCloseOutline, IoTrashOutline, IoChevronBackOutline, IoChevronForwardOutline } from "react-icons/io5";
 import type { GalleryImage } from "../types";
 
 interface ImageViewerProps {
@@ -59,6 +59,16 @@ export const ImageViewer: FC<ImageViewerProps> = ({
     setDragOffsetX(0);
   };
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") goTo(currentIndex + 1, 1);
+      else if (e.key === "ArrowLeft") goTo(currentIndex - 1, -1);
+      else if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [currentIndex, goTo, onClose]);
+
   const slideVariants = {
     enter: (dir: number) => ({ x: dir > 0 ? 300 : -300, opacity: 0 }),
     center: { x: 0, opacity: 1 },
@@ -112,16 +122,26 @@ export const ImageViewer: FC<ImageViewerProps> = ({
 
         {/* 이미지 영역 */}
         <div
-          className="image-viewer-body flex-1 flex items-center justify-center overflow-hidden"
+          className="image-viewer-body relative flex-1 flex items-center justify-center overflow-hidden"
           style={{ touchAction: "none" }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
+          {/* 이전 화살표 */}
+          {currentIndex > 0 && (
+            <button
+              onClick={() => goTo(currentIndex - 1, -1)}
+              className="prev-button absolute left-2 z-20 p-2 rounded-full bg-black/40 text-white hover:bg-black/70 transition-colors cursor-pointer"
+            >
+              <IoChevronBackOutline size={28} />
+            </button>
+          )}
+
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
               key={current.id}
-              className="image-viewer-slide relative w-full h-full flex items-center justify-center px-4"
+              className="image-viewer-slide relative w-full h-full flex items-center justify-center px-14"
               custom={direction}
               variants={slideVariants}
               initial="enter"
@@ -142,6 +162,16 @@ export const ImageViewer: FC<ImageViewerProps> = ({
               />
             </motion.div>
           </AnimatePresence>
+
+          {/* 다음 화살표 */}
+          {currentIndex < images.length - 1 && (
+            <button
+              onClick={() => goTo(currentIndex + 1, 1)}
+              className="next-button absolute right-2 z-20 p-2 rounded-full bg-black/40 text-white hover:bg-black/70 transition-colors cursor-pointer"
+            >
+              <IoChevronForwardOutline size={28} />
+            </button>
+          )}
         </div>
 
         {/* 인디케이터 dots (최대 10개 표시) */}
