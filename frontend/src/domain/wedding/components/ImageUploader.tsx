@@ -2,19 +2,21 @@ import { useRef, useMemo, useEffect, type FC } from "react";
 import { IoCloudUploadOutline, IoCloseCircleOutline } from "react-icons/io5";
 import { toast } from "react-toastify";
 
-const MAX_FILE_SIZE = 2 * 1024 * 1024;
+const DEFAULT_MAX_FILE_SIZE = 50 * 1024 * 1024;
+const PROFILE_MAX_FILE_SIZE = 2 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/jpeg", "image/png"];
 
 interface ImageUploaderProps {
   images: File[];
   onChange: (files: File[]) => void;
   maxCount?: number;
+  maxFileSize?: number;
   label?: string;
   existingUrls?: string[];
   onRemoveExisting?: (index: number) => void;
 }
 
-export const ImageUploader: FC<ImageUploaderProps> = ({ images, onChange, maxCount = 4, label = "이미지 업로드", existingUrls = [], onRemoveExisting }) => {
+export const ImageUploader: FC<ImageUploaderProps> = ({ images, onChange, maxCount = 4, maxFileSize = DEFAULT_MAX_FILE_SIZE, label = "이미지 업로드", existingUrls = [], onRemoveExisting }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const totalCount = existingUrls.length + images.length;
 
@@ -27,9 +29,10 @@ export const ImageUploader: FC<ImageUploaderProps> = ({ images, onChange, maxCou
 
   const handleSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
-    const invalid = files.filter((f) => !ALLOWED_TYPES.includes(f.type) || f.size > MAX_FILE_SIZE);
-    if (invalid.length > 0) toast.error("JPG, PNG만 허용되며 파일 크기는 2MB 이하여야 합니다.");
-    const valid = files.filter((f) => ALLOWED_TYPES.includes(f.type) && f.size <= MAX_FILE_SIZE);
+    const maxMB = Math.round(maxFileSize / (1024 * 1024));
+    const invalid = files.filter((f) => !ALLOWED_TYPES.includes(f.type) || f.size > maxFileSize);
+    if (invalid.length > 0) toast.error(`JPG, PNG만 허용되며 파일 크기는 ${maxMB}MB 이하여야 합니다.`);
+    const valid = files.filter((f) => ALLOWED_TYPES.includes(f.type) && f.size <= maxFileSize);
     const remaining = maxCount - totalCount;
     if (remaining > 0) {
       onChange([...images, ...valid.slice(0, remaining)]);
@@ -104,7 +107,7 @@ export const ImageUploader: FC<ImageUploaderProps> = ({ images, onChange, maxCou
         onChange={handleSelect}
         className="hidden"
       />
-      <p className="mt-1 text-xs text-text-secondary">JPG, PNG / 최대 2MB</p>
+      <p className="mt-1 text-xs text-text-secondary">JPG, PNG / 최대 {Math.round(maxFileSize / (1024 * 1024))}MB</p>
     </div>
   );
 }
@@ -135,7 +138,7 @@ export const SingleImageUploader: FC<SingleImageUploaderProps> = ({ image, previ
   const handleSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!ALLOWED_TYPES.includes(file.type) || file.size > MAX_FILE_SIZE) {
+    if (!ALLOWED_TYPES.includes(file.type) || file.size > PROFILE_MAX_FILE_SIZE) {
       toast.error("JPG, PNG만 허용되며 파일 크기는 2MB 이하여야 합니다.");
       return;
     }
