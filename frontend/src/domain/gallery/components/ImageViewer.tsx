@@ -84,9 +84,10 @@ export const ImageViewer: FC<ImageViewerProps> = ({
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
         onContextMenu={(e) => e.preventDefault()}
+        onClick={onClose}
       >
         {/* 상단 바 */}
-        <div className="image-viewer-header flex items-center justify-between px-4 py-3">
+        <div className="image-viewer-header flex items-center justify-between px-4 py-3" onClick={(e) => e.stopPropagation()}>
           <button
             onClick={onClose}
             className="close-button p-2 text-white/80 hover:text-white transition-colors cursor-pointer"
@@ -131,7 +132,7 @@ export const ImageViewer: FC<ImageViewerProps> = ({
           {/* 이전 화살표 */}
           {currentIndex > 0 && (
             <button
-              onClick={() => goTo(currentIndex - 1, -1)}
+              onClick={(e) => { e.stopPropagation(); goTo(currentIndex - 1, -1); }}
               className="prev-button absolute left-2 z-20 p-2 rounded-full bg-black/40 text-white hover:bg-black/70 transition-colors cursor-pointer"
             >
               <IoChevronBackOutline size={28} />
@@ -152,13 +153,14 @@ export const ImageViewer: FC<ImageViewerProps> = ({
                 transform: touchStartX !== null ? `translateX(${dragOffsetX}px)` : undefined,
               }}
             >
-              {/* 이미지 보호 오버레이 */}
-              <div className="image-protect absolute inset-0 z-10" />
+              {/* 이미지 보호 오버레이 — pointer-events:none으로 클릭을 img에 투과 */}
+              <div className="image-protect absolute inset-0 z-10" style={{ pointerEvents: "none" }} />
               <img
                 src={current.imageUrl}
                 alt={current.caption ?? "갤러리 이미지"}
                 className="gallery-image max-w-full max-h-full object-contain"
                 draggable={false}
+                onClick={(e) => e.stopPropagation()}
               />
             </motion.div>
           </AnimatePresence>
@@ -166,7 +168,7 @@ export const ImageViewer: FC<ImageViewerProps> = ({
           {/* 다음 화살표 */}
           {currentIndex < images.length - 1 && (
             <button
-              onClick={() => goTo(currentIndex + 1, 1)}
+              onClick={(e) => { e.stopPropagation(); goTo(currentIndex + 1, 1); }}
               className="next-button absolute right-2 z-20 p-2 rounded-full bg-black/40 text-white hover:bg-black/70 transition-colors cursor-pointer"
             >
               <IoChevronForwardOutline size={28} />
@@ -176,7 +178,7 @@ export const ImageViewer: FC<ImageViewerProps> = ({
 
         {/* 인디케이터 dots (최대 10개 표시) */}
         {images.length <= 10 && (
-          <div className="image-viewer-dots flex items-center justify-center gap-1.5 py-4">
+          <div className="image-viewer-dots flex items-center justify-center gap-1.5 py-4" onClick={(e) => e.stopPropagation()}>
             {images.map((_, i) => (
               <div
                 key={i}
