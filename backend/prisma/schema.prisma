@@ -204,6 +204,7 @@ model Gallery {
   id           Int      @id @default(autoincrement())
   weddingId    Int
   imageUrl     String   @db.VarChar(500)
+  displayUrl   String?  @db.VarChar(500)
   thumbnailUrl String?  @db.VarChar(500)
   caption      String?  @db.VarChar(255)
   orderIndex   Int

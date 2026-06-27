@@ -4,6 +4,7 @@ export interface GalleryResponse {
   id: number;
   weddingId: number;
   imageUrl: string;
+  displayUrl: string | null;
   thumbnailUrl: string | null;
   caption: string | null;
   orderIndex: number;
@@ -23,6 +24,7 @@ export function toGalleryResponse(gallery: Gallery): GalleryResponse {
     id: gallery.id,
     weddingId: gallery.weddingId,
     imageUrl: gallery.imageUrl,
+    displayUrl: gallery.displayUrl,
     thumbnailUrl: gallery.thumbnailUrl,
     caption: gallery.caption,
     orderIndex: gallery.orderIndex,

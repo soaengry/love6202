@@ -2,6 +2,7 @@ export interface GalleryImage {
   id: number;
   weddingId: number;
   imageUrl: string;
+  displayUrl: string | null;
   thumbnailUrl: string | null;
   caption: string | null;
   orderIndex: number;

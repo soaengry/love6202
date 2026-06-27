@@ -42,10 +42,11 @@ export async function uploadImage(
 export async function uploadImageWithThumbnail(
   file: Express.Multer.File,
   folder = "galleries",
-): Promise<{ imageUrl: string; thumbnailUrl: string; originalKey: string }> {
+): Promise<{ imageUrl: string; displayUrl: string; thumbnailUrl: string; originalKey: string }> {
   const uuid = crypto.randomUUID();
   const ext = getExtension(file.mimetype);
   const originalKey = `${folder}/${uuid}${ext}`;
+  const displayKey = `${folder}/display/${uuid}.jpg`;
   const thumbKey = `${folder}/thumbs/${uuid}.jpg`;
 
   // 원본 업로드
@@ -58,7 +59,22 @@ export async function uploadImageWithThumbnail(
     }),
   );
 
-  // 썸네일 생성 (400px 리사이즈)
+  // 웹 최적화 버전 생성 (최대 1920px, JPEG 85%) — 뷰어용
+  const displayBuffer = await sharp(file.buffer)
+    .resize(1920, 1920, { fit: "inside", withoutEnlargement: true })
+    .jpeg({ quality: 85 })
+    .toBuffer();
+
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: env.AWS_BUCKET,
+      Key: displayKey,
+      Body: displayBuffer,
+      ContentType: "image/jpeg",
+    }),
+  );
+
+  // 썸네일 생성 (400px, JPEG 80%) — 그리드용
   const thumbBuffer = await sharp(file.buffer)
     .resize(400, undefined, { withoutEnlargement: true })
     .jpeg({ quality: 80 })
@@ -76,6 +92,7 @@ export async function uploadImageWithThumbnail(
   const baseUrl = `https://${env.AWS_BUCKET}.s3.${env.AWS_REGION}.amazonaws.com`;
   return {
     imageUrl: `${baseUrl}/${originalKey}`,
+    displayUrl: `${baseUrl}/${displayKey}`,
     thumbnailUrl: `${baseUrl}/${thumbKey}`,
     originalKey,
   };
