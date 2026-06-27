@@ -83,7 +83,12 @@ const LandingSection: FC<InfoTabProps> = ({ data }) => {
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
     const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
-    return `${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}. ${DAYS[d.getDay()]}요일`;
+    const hour = d.getHours();
+    const minute = d.getMinutes();
+    const ampm = hour < 12 ? "오전" : "오후";
+    const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+    const timePart = `${ampm} ${displayHour}시${minute > 0 ? ` ${minute}분` : ""}`;
+    return `${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}. ${DAYS[d.getDay()]}요일 ${timePart}`;
   };
 
   return (
