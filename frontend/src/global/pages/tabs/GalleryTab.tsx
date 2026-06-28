@@ -16,11 +16,10 @@ interface GalleryTabProps {
 
 export const GalleryTab: FC<GalleryTabProps> = ({ weddingId, setActiveTab }) => {
   const { user } = useAuthStore();
-  const { images, isLoading, loadMore, refresh, removeImage, isInitialized } =
+  const { images, isLoading, refresh, removeImage, isInitialized } =
     useInfiniteGallery(weddingId);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const sentinelRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isHostOrAdmin = user?.role === "ADMIN" || user?.role === "HOST";
@@ -61,29 +60,12 @@ export const GalleryTab: FC<GalleryTabProps> = ({ weddingId, setActiveTab }) => 
     }
   };
 
-  // 초기 로드
+  // 전체 갤러리 초기 로드
   useEffect(() => {
     if (!isInitialized.current) {
       refresh();
     }
   }, [refresh, isInitialized]);
-
-  // Intersection Observer for infinite scroll
-  useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          loadMore();
-        }
-      },
-      { rootMargin: "200px" },
-    );
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [loadMore]);
 
   return (
     <div className="gallery-tab">
@@ -124,7 +106,11 @@ export const GalleryTab: FC<GalleryTabProps> = ({ weddingId, setActiveTab }) => 
       </div>
 
       {/* 갤러리 콘텐츠 */}
-      {images.length === 0 && !isLoading ? (
+      {isLoading ? (
+        <div className="gallery-loading flex justify-center py-16">
+          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : images.length === 0 ? (
         <div className="gallery-empty text-center py-16">
           <IoImagesOutline className="text-5xl text-text-secondary mx-auto mb-4" />
           <p className="text-sm text-text-secondary">아직 사진이 없습니다.</p>
@@ -135,16 +121,6 @@ export const GalleryTab: FC<GalleryTabProps> = ({ weddingId, setActiveTab }) => 
           onImageClick={(index) => setViewerIndex(index)}
         />
       )}
-
-      {/* 로딩 스피너 */}
-      {isLoading && (
-        <div className="gallery-loading flex justify-center py-6">
-          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-        </div>
-      )}
-
-      {/* 무한 스크롤 sentinel */}
-      <div ref={sentinelRef} className="h-1" />
 
       {/* 이미지 뷰어 */}
       {viewerIndex !== null && (
