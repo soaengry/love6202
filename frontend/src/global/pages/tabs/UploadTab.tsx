@@ -1,5 +1,5 @@
 import { useState, type FC } from "react";
-import { IoArrowBackOutline, IoQrCodeOutline, IoCloseOutline, IoDownloadOutline } from "react-icons/io5";
+import { IoArrowBackOutline, IoQrCodeOutline, IoCloseOutline, IoDownloadOutline, IoNotificationsOutline } from "react-icons/io5";
 import { QRCodeSVG, QRCodeCanvas } from "qrcode.react";
 import { UploadForm } from "@/domain/upload/components/UploadForm.tsx";
 import { MyUploadList } from "@/domain/upload/components/MyUploadList.tsx";
@@ -56,9 +56,19 @@ const QrModal: FC<{ url: string; onClose: () => void }> = ({ url, onClose }) => 
   );
 };
 
+const NOTICE_KEY = "upload_notice_dismissed";
+
 export const UploadTab: FC<UploadTabProps> = ({ weddingId, setActiveTab }) => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [showQr, setShowQr] = useState(false);
+  const [showNotice, setShowNotice] = useState(
+    () => localStorage.getItem(NOTICE_KEY) !== "true",
+  );
+
+  const dismissNotice = () => {
+    localStorage.setItem(NOTICE_KEY, "true");
+    setShowNotice(false);
+  };
 
   const qrUrl = `${window.location.origin}/${weddingId}?tab=upload`;
 
@@ -87,6 +97,23 @@ export const UploadTab: FC<UploadTabProps> = ({ weddingId, setActiveTab }) => {
           <IoQrCodeOutline className="text-xl text-text-primary" />
         </button>
       </div>
+
+      {/* 공지 배너 */}
+      {showNotice && (
+        <div className="upload-notice flex items-start gap-3 px-4 py-3 mb-5 rounded-xl bg-primary/10 border border-primary/20">
+          <IoNotificationsOutline size={18} className="text-primary mt-0.5 shrink-0" />
+          <p className="text-sm text-primary flex-1 leading-relaxed">
+            결혼식 사진을 올려주세요.
+          </p>
+          <button
+            onClick={dismissNotice}
+            className="p-0.5 text-primary/60 hover:text-primary transition-colors cursor-pointer shrink-0"
+            aria-label="공지 닫기"
+          >
+            <IoCloseOutline size={18} />
+          </button>
+        </div>
+      )}
 
       {/* 업로드 폼 */}
       <UploadForm weddingId={weddingId} onUploadComplete={handleUploadComplete} />
