@@ -9,18 +9,28 @@ import { toGalleryResponse, type GalleryListResponse, type GalleryResponse } fro
 
 export async function uploadImages(
   userId: number,
+  userRole: string,
   files: Express.Multer.File[],
+  bodyWeddingId?: number,
 ): Promise<GalleryResponse[]> {
   if (files.length > 20) {
     throw AppError.from(GalleryErrorCode.GALLERY_UPLOAD_LIMIT_EXCEEDED);
   }
 
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user?.weddingId) {
-    throw AppError.from(GalleryErrorCode.GALLERY_WEDDING_NOT_FOUND);
-  }
+  let weddingId: number;
 
-  const weddingId = user.weddingId;
+  if (userRole === "ADMIN") {
+    if (!bodyWeddingId) {
+      throw AppError.from(GalleryErrorCode.GALLERY_WEDDING_NOT_FOUND);
+    }
+    weddingId = bodyWeddingId;
+  } else {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user?.weddingId) {
+      throw AppError.from(GalleryErrorCode.GALLERY_WEDDING_NOT_FOUND);
+    }
+    weddingId = user.weddingId;
+  }
 
   // 현재 최대 orderIndex 조회
   const maxOrder = await prisma.gallery.aggregate({

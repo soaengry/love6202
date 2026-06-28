@@ -45,7 +45,8 @@ router.post(
       if (!files || files.length === 0) {
         return res.status(400).json(apiResponse.error(400, "업로드할 이미지가 없습니다."));
       }
-      const result = await galleryService.uploadImages(req.userId!, files);
+      const bodyWeddingId = req.body.weddingId ? Number(req.body.weddingId) : undefined;
+      const result = await galleryService.uploadImages(req.userId!, req.userRole!, files, bodyWeddingId);
       res.status(201).json(apiResponse.created("갤러리 업로드 성공", result));
     } catch (err) {
       next(err);
