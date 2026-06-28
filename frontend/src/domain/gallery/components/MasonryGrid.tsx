@@ -8,16 +8,11 @@ interface MasonryGridProps {
 }
 
 export const MasonryGrid: FC<MasonryGridProps> = ({ images, onImageClick }) => {
-  // 2열 분배: 좌-우 교대로 배치
-  const leftColumn: { image: GalleryImage; globalIndex: number }[] = [];
-  const rightColumn: { image: GalleryImage; globalIndex: number }[] = [];
+  // 3열 분배: 순서대로 교대 배치
+  const columns: { image: GalleryImage; globalIndex: number }[][] = [[], [], []];
 
   images.forEach((image, i) => {
-    if (i % 2 === 0) {
-      leftColumn.push({ image, globalIndex: i });
-    } else {
-      rightColumn.push({ image, globalIndex: i });
-    }
+    columns[i % 3].push({ image, globalIndex: i });
   });
 
   const renderItem = (
@@ -26,7 +21,7 @@ export const MasonryGrid: FC<MasonryGridProps> = ({ images, onImageClick }) => {
   ) => (
     <motion.div
       key={image.id}
-      className="masonry-item relative mb-2 rounded-lg overflow-hidden cursor-pointer"
+      className="masonry-item relative mb-1.5 rounded-md overflow-hidden cursor-pointer"
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ delay: columnIndex * 0.05, duration: 0.3 }}
@@ -45,13 +40,12 @@ export const MasonryGrid: FC<MasonryGridProps> = ({ images, onImageClick }) => {
   );
 
   return (
-    <div className="masonry-grid flex gap-2">
-      <div className="masonry-column flex-1 flex flex-col">
-        {leftColumn.map((item, i) => renderItem(item, i))}
-      </div>
-      <div className="masonry-column flex-1 flex flex-col">
-        {rightColumn.map((item, i) => renderItem(item, i))}
-      </div>
+    <div className="masonry-grid flex gap-1.5">
+      {columns.map((col, ci) => (
+        <div key={ci} className="masonry-column flex-1 flex flex-col">
+          {col.map((item, i) => renderItem(item, i))}
+        </div>
+      ))}
     </div>
   );
 };
