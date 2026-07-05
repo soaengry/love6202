@@ -215,11 +215,18 @@ export async function updateWedding(
   const existingBrideProfileUrl =
     existingCouples.find((c) => c.role === "BRIDE")?.profileImageUrl ?? null;
 
+  const currentHeroImages = await prisma.heroImage.findMany({ where: { weddingId } });
+
   const { heroImageUrls: newHeroImageUrls, groomProfileUrl: newGroomUrl, brideProfileUrl: newBrideUrl } =
     await uploadWeddingImages(files);
 
   const existingHeroUrls: string[] = body.existingHeroImageUrls ?? [];
   const allHeroImageUrls = [...existingHeroUrls, ...newHeroImageUrls];
+
+  // 제거된 히어로 이미지 URL (유지하지 않는 기존 이미지)
+  const removedHeroUrls = currentHeroImages
+    .map((h) => h.imageUrl)
+    .filter((url) => !existingHeroUrls.includes(url));
   const groomProfileUrl = newGroomUrl ?? existingGroomProfileUrl;
   const brideProfileUrl = newBrideUrl ?? existingBrideProfileUrl;
 
@@ -276,6 +283,9 @@ export async function updateWedding(
     await cleanupUploadedImages([...newHeroImageUrls, newGroomUrl, newBrideUrl]);
     throw err;
   }
+
+  // 트랜잭션 성공 후 제거된 히어로 이미지 S3 삭제
+  await cleanupUploadedImages(removedHeroUrls);
 
   return toWeddingDetailResponse(updated);
 }

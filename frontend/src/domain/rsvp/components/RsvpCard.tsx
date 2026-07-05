@@ -1,8 +1,11 @@
 import type { FC } from "react";
+import { IoCreateOutline, IoTrashOutline } from "react-icons/io5";
 import type { RsvpResponse, RsvpAttendance, RsvpSide } from "../types";
 
 interface RsvpCardProps {
   rsvp: RsvpResponse;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
 const attendanceLabel: Record<RsvpAttendance, { label: string; className: string }> = {
@@ -25,7 +28,7 @@ const sideLabel: Record<RsvpSide, string> = {
   GROOM: "신랑측",
 };
 
-export const RsvpCard: FC<RsvpCardProps> = ({ rsvp }) => {
+export const RsvpCard: FC<RsvpCardProps> = ({ rsvp, onEdit, onDelete }) => {
   const attendance = attendanceLabel[rsvp.attendance];
   const formattedDate = new Date(rsvp.createdAt).toLocaleDateString("ko-KR", {
     month: "long",
@@ -36,15 +39,35 @@ export const RsvpCard: FC<RsvpCardProps> = ({ rsvp }) => {
 
   return (
     <div className="rsvp-card p-4 rounded-xl bg-surface border border-border-light space-y-3">
-      {/* 헤더: 이름 + 참석 여부 */}
+      {/* 헤더: 이름 + 참석 여부 + 관리 버튼 */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="rsvp-name text-sm font-semibold text-text-primary">{rsvp.name}</span>
           <span className="rsvp-side text-xs text-text-tertiary">{sideLabel[rsvp.side]}</span>
         </div>
-        <span className={`rsvp-attendance text-xs font-medium px-2.5 py-1 rounded-full ${attendance.className}`}>
-          {attendance.label}
-        </span>
+        <div className="flex items-center gap-1.5">
+          <span className={`rsvp-attendance text-xs font-medium px-2.5 py-1 rounded-full ${attendance.className}`}>
+            {attendance.label}
+          </span>
+          {onEdit && (
+            <button
+              type="button"
+              onClick={onEdit}
+              className="rsvp-edit-btn p-1.5 text-text-tertiary hover:text-primary transition-colors rounded-lg hover:bg-primary/10 cursor-pointer"
+            >
+              <IoCreateOutline size={15} />
+            </button>
+          )}
+          {onDelete && (
+            <button
+              type="button"
+              onClick={onDelete}
+              className="rsvp-delete-btn p-1.5 text-text-tertiary hover:text-error transition-colors rounded-lg hover:bg-error/10 cursor-pointer"
+            >
+              <IoTrashOutline size={15} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* 연락처 */}
