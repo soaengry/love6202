@@ -31,7 +31,7 @@ export const ScheduleStep: FC<ScheduleStepProps> = ({
   };
 
   return (
-    <div className="space-y-5 hidden">
+    <div className="space-y-5">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-text-primary">식순</h2>
         <button
