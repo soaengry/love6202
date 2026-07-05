@@ -159,7 +159,7 @@ const LandingSection: FC<InfoTabProps> = ({ data }) => {
             {bride.name}
           </p>
         )}
-        <h1 className="text-2xl font-semibold mb-4 drop-shadow-lg leading-relaxed">
+        <h1 className="text-2xl font-semibold mb-4 drop-shadow-lg leading-relaxed whitespace-pre-line">
           {wedding.title}
         </h1>
         <p className="text-sm tracking-[0.15em] text-white/80 drop-shadow">
