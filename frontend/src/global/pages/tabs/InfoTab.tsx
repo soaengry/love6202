@@ -474,46 +474,6 @@ const LocationSection: FC<{ wedding: WeddingDetailResponse["wedding"] }> = ({
   );
 };
 
-// ─── Schedule Section ───
-const ScheduleSection: FC<{
-  schedules: WeddingDetailResponse["schedules"];
-}> = ({ schedules }) => {
-  if (schedules.length === 0) return null;
-  const sorted = [...schedules].sort((a, b) => a.orderIndex - b.orderIndex);
-
-  return (
-    <AnimatedSection className="py-10 px-6">
-      <SectionLabel text="Ceremony" />
-      <div className="relative max-w-sm mx-auto">
-        <div className="absolute left-[6px] top-3 bottom-3 w-px bg-primary/15" />
-        <div className="space-y-6">
-          {sorted.map((schedule, i) => (
-            <div key={schedule.id} className="relative pl-8">
-              <div
-                className={`schedule-dot absolute left-0 top-1 w-[13px] h-[13px] rounded-full border-2 ${
-                  i === 0
-                    ? "border-primary bg-primary"
-                    : "border-primary/40 bg-surface"
-                }`}
-              />
-              <div>
-                <p className="schedule-title text-sm font-medium text-text-primary">
-                  {schedule.title}
-                </p>
-                {schedule.description && (
-                  <p className="schedule-desc text-xs text-text-tertiary mt-0.5">
-                    {schedule.description}
-                  </p>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </AnimatedSection>
-  );
-};
-
 // ─── Information Section (Dress Code, Parking, Meals, Transport) ───
 const InformationSection: FC<InfoTabProps> = ({ data }) => {
   const { wedding, transportations } = data;
@@ -751,7 +711,6 @@ export const InfoTab: FC<InfoTabProps> = ({ data }) => {
       <CoupleSection couples={data.couples} />
       <DateVenueSection wedding={data.wedding} />
       <LocationSection wedding={data.wedding} />
-      <ScheduleSection schedules={data.schedules} />
       <InformationSection data={data} />
       <GiftSection accounts={data.accounts} />
 
