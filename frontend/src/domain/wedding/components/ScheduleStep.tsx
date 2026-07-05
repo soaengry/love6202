@@ -1,15 +1,26 @@
 import type { FC } from "react";
 import { useFieldArray, type Control, type FieldErrors } from "react-hook-form";
-import { IoAddCircleOutline, IoTrashOutline, IoArrowUpOutline, IoArrowDownOutline } from "react-icons/io5";
+import {
+  IoAddCircleOutline,
+  IoTrashOutline,
+  IoArrowUpOutline,
+  IoArrowDownOutline,
+} from "react-icons/io5";
 import type { WeddingFormData } from "../types.ts";
 
 interface ScheduleStepProps {
   control: Control<WeddingFormData>;
   errors: FieldErrors<WeddingFormData>;
-  register: ReturnType<typeof import("react-hook-form").useForm<WeddingFormData>>["register"];
+  register: ReturnType<
+    typeof import("react-hook-form").useForm<WeddingFormData>
+  >["register"];
 }
 
-export const ScheduleStep: FC<ScheduleStepProps> = ({ control, errors, register }) => {
+export const ScheduleStep: FC<ScheduleStepProps> = ({
+  control,
+  errors,
+  register,
+}) => {
   const { fields, append, remove, swap } = useFieldArray({
     control,
     name: "schedules",
@@ -20,7 +31,7 @@ export const ScheduleStep: FC<ScheduleStepProps> = ({ control, errors, register 
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 hidden">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-text-primary">식순</h2>
         <button
@@ -41,9 +52,14 @@ export const ScheduleStep: FC<ScheduleStepProps> = ({ control, errors, register 
 
       <div className="space-y-3">
         {fields.map((field, index) => (
-          <div key={field.id} className="bg-bg-secondary rounded-xl p-4 space-y-3">
+          <div
+            key={field.id}
+            className="bg-bg-secondary rounded-xl p-4 space-y-3"
+          >
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-text-secondary">#{index + 1}</span>
+              <span className="text-sm font-medium text-text-secondary">
+                #{index + 1}
+              </span>
               <div className="flex items-center gap-1">
                 {index > 0 && (
                   <button
@@ -73,7 +89,11 @@ export const ScheduleStep: FC<ScheduleStepProps> = ({ control, errors, register 
               </div>
             </div>
 
-            <input type="hidden" {...register(`schedules.${index}.orderIndex`)} value={index} />
+            <input
+              type="hidden"
+              {...register(`schedules.${index}.orderIndex`)}
+              value={index}
+            />
 
             <div>
               <input
@@ -82,7 +102,9 @@ export const ScheduleStep: FC<ScheduleStepProps> = ({ control, errors, register 
                 className="w-full px-4 py-3 border border-border rounded-xl bg-bg-primary text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
               />
               {errors.schedules?.[index]?.title && (
-                <p className="mt-1 text-sm text-error">{errors.schedules[index].title?.message}</p>
+                <p className="mt-1 text-sm text-error">
+                  {errors.schedules[index].title?.message}
+                </p>
               )}
             </div>
 
@@ -97,4 +119,4 @@ export const ScheduleStep: FC<ScheduleStepProps> = ({ control, errors, register 
       </div>
     </div>
   );
-}
+};
