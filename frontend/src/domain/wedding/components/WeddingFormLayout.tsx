@@ -33,6 +33,7 @@ interface WeddingFormLayoutProps {
   venueLat: number | null;
   venueLng: number | null;
   images: WeddingImagesState & WeddingImagesActions;
+  showScheduleStep?: boolean;
 }
 
 export const WeddingFormLayout: FC<WeddingFormLayoutProps> = ({
@@ -42,6 +43,7 @@ export const WeddingFormLayout: FC<WeddingFormLayoutProps> = ({
   register, control, errors, setValue,
   venueLat, venueLng,
   images,
+  showScheduleStep = true,
 }) => (
   <div className="min-h-screen bg-bg-secondary">
     <motion.div
@@ -51,7 +53,7 @@ export const WeddingFormLayout: FC<WeddingFormLayoutProps> = ({
     >
       <h1 className="text-xl font-bold text-text-primary mb-6 text-center">{title}</h1>
 
-      <StepIndicator currentStep={step} onStepClick={onStepClick} />
+      <StepIndicator currentStep={step} onStepClick={onStepClick} hiddenSteps={showScheduleStep ? [] : [2]} />
 
       <form onSubmit={(e) => e.preventDefault()} className="bg-bg-primary rounded-2xl shadow-sm border border-border p-6">
         <AnimatePresence mode="wait">
@@ -88,7 +90,7 @@ export const WeddingFormLayout: FC<WeddingFormLayoutProps> = ({
                 bridePreviewUrl={images.bridePreviewUrl}
               />
             )}
-            {step === 2 && (
+            {step === 2 && showScheduleStep && (
               <ScheduleStep control={control} errors={errors} register={register} />
             )}
             {step === 3 && (

@@ -1,6 +1,10 @@
-import { useEffect, useRef, type FC } from "react";
+import { useEffect, useRef, useState, type FC } from "react";
+import { toast } from "react-toastify";
 import { useInfiniteRsvpList } from "../hooks/useInfiniteRsvpList";
 import { RsvpCard } from "./RsvpCard";
+import { RsvpForm } from "./RsvpForm";
+import { rsvpApi } from "../api/rsvpApi";
+import type { RsvpResponse } from "../types";
 
 interface RsvpAdminListProps {
   weddingId: number;
@@ -9,6 +13,8 @@ interface RsvpAdminListProps {
 export const RsvpAdminList: FC<RsvpAdminListProps> = ({ weddingId }) => {
   const { items, isLoading, loadMore, refresh, isInitialized } = useInfiniteRsvpList(weddingId);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const [editingRsvp, setEditingRsvp] = useState<RsvpResponse | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!isInitialized.current) {
@@ -32,6 +38,40 @@ export const RsvpAdminList: FC<RsvpAdminListProps> = ({ weddingId }) => {
     return () => observer.disconnect();
   }, [loadMore]);
 
+  const handleDelete = async (rsvp: RsvpResponse) => {
+    if (!window.confirm(`${rsvp.name}님의 참석 의향서를 삭제하시겠습니까?`)) return;
+    setDeletingId(rsvp.id);
+    try {
+      await rsvpApi.remove(rsvp.id);
+      toast.success("삭제되었습니다");
+      refresh();
+    } catch {
+      toast.error("삭제에 실패했습니다");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  if (editingRsvp) {
+    return (
+      <div className="rsvp-edit-overlay fixed inset-0 z-50 bg-overlay flex items-end sm:items-center justify-center">
+        <div className="bg-bg-primary w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl p-6">
+          <p className="text-sm font-semibold text-text-primary mb-4">참석 의향서 수정 — {editingRsvp.name}</p>
+          <RsvpForm
+            weddingId={weddingId}
+            existingRsvp={editingRsvp}
+            onSuccess={() => {
+              setEditingRsvp(null);
+              refresh();
+              toast.success("수정되었습니다");
+            }}
+            onCancel={() => setEditingRsvp(null)}
+          />
+        </div>
+      </div>
+    );
+  }
+
   if (!isLoading && items.length === 0) {
     return (
       <div className="rsvp-empty text-center py-12 text-text-tertiary text-sm">
@@ -43,7 +83,12 @@ export const RsvpAdminList: FC<RsvpAdminListProps> = ({ weddingId }) => {
   return (
     <div className="rsvp-admin-list space-y-3">
       {items.map((rsvp) => (
-        <RsvpCard key={rsvp.id} rsvp={rsvp} />
+        <RsvpCard
+          key={rsvp.id}
+          rsvp={rsvp}
+          onEdit={() => setEditingRsvp(rsvp)}
+          onDelete={deletingId === rsvp.id ? undefined : () => handleDelete(rsvp)}
+        />
       ))}
       <div ref={sentinelRef} />
       {isLoading && (

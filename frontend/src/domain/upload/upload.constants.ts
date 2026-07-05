@@ -4,7 +4,7 @@ export const UPLOAD_API = {
 } as const;
 
 export const UPLOAD_VALIDATION = {
-  MAX_UPLOAD_COUNT: 10,
+  MAX_UPLOAD_COUNT: 11,
   MAX_FILE_SIZE_MB: 10,
   ACCEPTED_TYPES: ["image/jpeg", "image/png", "image/webp"],
 } as const;

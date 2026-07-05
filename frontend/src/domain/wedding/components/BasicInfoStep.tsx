@@ -100,11 +100,12 @@ export const BasicInfoStep: FC<BasicInfoStepProps> = ({ register, errors, heroIm
         <label htmlFor="title" className="block text-sm font-medium text-text-primary mb-1.5">
           초대장 제목 <span className="text-error">*</span>
         </label>
-        <input
+        <textarea
           id="title"
           {...register("wedding.title")}
-          placeholder="우리의 결혼식에 초대합니다"
-          className="w-full px-4 py-3 border border-border rounded-xl bg-bg-primary text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+          rows={2}
+          placeholder={"우리의 결혼식에\n초대합니다"}
+          className="w-full px-4 py-3 border border-border rounded-xl bg-bg-primary text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors resize-none"
         />
         {errors.wedding?.title && (
           <p className="mt-1 text-sm text-error">{errors.wedding.title.message}</p>

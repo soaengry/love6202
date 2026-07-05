@@ -6,6 +6,8 @@ import { driveSyncQueue } from "@/config/queue";
 import { UploadErrorCode } from "./upload.error";
 import { toUploadResponse, type UploadResponse } from "./upload.types";
 
+const MAX_UPLOADS_PER_REQUEST = 11;
+
 // ─── List ───────────────────────────────────────────────
 
 export async function getMyUploads(
@@ -32,7 +34,7 @@ export async function uploadImages(
   weddingId: number,
   files: Express.Multer.File[],
 ): Promise<UploadResponse[]> {
-  if (files.length > 10) {
+  if (files.length > MAX_UPLOADS_PER_REQUEST) {
     throw AppError.from(UploadErrorCode.UPLOAD_LIMIT_EXCEEDED);
   }
 
@@ -102,10 +104,15 @@ export async function deleteUpload(
     throw AppError.from(UploadErrorCode.UPLOAD_UNAUTHORIZED);
   }
 
-  // S3 원본 + 썸네일 삭제
+  // S3 원본 + display + 썸네일 삭제
   const deletePromises: Promise<void>[] = [];
   if (upload.s3Key) {
     deletePromises.push(deleteFileByKey(upload.s3Key).catch(() => {}));
+    // display 버전: {folder}/display/{uuid}.jpg
+    const parts = upload.s3Key.split("/");
+    const folder = parts.slice(0, -1).join("/");
+    const uuid = parts[parts.length - 1].replace(/\.[^.]+$/, "");
+    deletePromises.push(deleteFileByKey(`${folder}/display/${uuid}.jpg`).catch(() => {}));
   }
   if (upload.thumbnailUrl) {
     const thumbKey = new URL(upload.thumbnailUrl).pathname.slice(1);

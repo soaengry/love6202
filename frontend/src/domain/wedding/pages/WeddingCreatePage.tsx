@@ -13,6 +13,11 @@ export const WeddingCreatePage: FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { form, step, setStep, handleNext, handlePrev, TOTAL_STEPS } = useWeddingForm();
+
+  const handlePrev_ = () => {
+    if (step === 3) setStep(1); // skip hidden schedule step
+    else handlePrev();
+  };
   const images = useWeddingImages();
 
   const { register, control, handleSubmit, formState: { errors }, setValue, watch } = form;
@@ -40,14 +45,17 @@ export const WeddingCreatePage: FC = () => {
     }
   });
 
-  const handleNext_ = () =>
-    handleNext(() => {
+  const handleNext_ = async () => {
+    const prevStep = step;
+    await handleNext(() => {
       if (step === 0 && images.heroImages.length === 0) {
         toast.error("대표 이미지를 1장 이상 선택해주세요.");
         return false;
       }
       return true;
     });
+    if (prevStep === 1) setStep(3); // skip hidden schedule step
+  };
 
   return (
     <WeddingFormLayout
@@ -56,7 +64,8 @@ export const WeddingCreatePage: FC = () => {
       totalSteps={TOTAL_STEPS}
       onStepClick={setStep}
       onNext={handleNext_}
-      onPrev={handlePrev}
+      onPrev={handlePrev_}
+      showScheduleStep={false}
       onSubmit={onSubmit}
       isSubmitting={isSubmitting}
       submitLabel="생성 완료"
