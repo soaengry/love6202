@@ -31,6 +31,12 @@ const tabs = [
     activeIcon: IoHeartCircle,
   },
   {
+    id: "gallery" as TabId,
+    label: "갤러리",
+    icon: IoImagesOutline,
+    activeIcon: IoImages,
+  },
+  {
     id: "rsvp" as TabId,
     label: "참석여부",
     icon: IoTodayOutline,
@@ -41,12 +47,6 @@ const tabs = [
     label: "방명록",
     icon: IoFootstepsOutline,
     activeIcon: IoFootsteps,
-  },
-  {
-    id: "gallery" as TabId,
-    label: "갤러리",
-    icon: IoImagesOutline,
-    activeIcon: IoImages,
   },
   {
     id: "upload" as TabId,

@@ -710,9 +710,9 @@ export const InfoTab: FC<InfoTabProps> = ({ data }) => {
       <GreetingSection greeting={data.wedding.greeting} />
       <CoupleSection couples={data.couples} />
       <DateVenueSection wedding={data.wedding} />
+      <GiftSection accounts={data.accounts} />
       <LocationSection wedding={data.wedding} />
       <InformationSection data={data} />
-      <GiftSection accounts={data.accounts} />
 
       <div className="flex items-center justify-center gap-3 py-4">
         <div className="w-16 h-px bg-primary/10" />
