@@ -110,6 +110,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           source: "scripts/,docker/,nginx/,frontend/dist/"
           target: /home/ubuntu/app-deploy-tmp/
+          debug: true
 
       - name: Run blue/green deployment
         uses: appleboy/ssh-action@v1.0.3
