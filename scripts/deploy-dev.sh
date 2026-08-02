@@ -32,4 +32,8 @@ if ! "$APP_DIR/scripts/health-check.sh" love6202-backend-dev 12 5; then
     exit 1
 fi
 
+# ── Clean up unused images from previous deploys ────────────────────────────
+echo "==> Pruning unused Docker images"
+docker image prune -a -f || true
+
 echo "==> Dev deployment complete (tag=$IMAGE_TAG)"

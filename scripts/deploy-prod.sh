@@ -77,4 +77,9 @@ docker stop "$ACTIVE_CONTAINER" 2>/dev/null || true
 
 # ── Persist new active color ────────────────────────────────────────────────
 echo "$NEW_COLOR" > "$ACTIVE_FILE"
+
+# ── Clean up unused images from previous deploys ────────────────────────────
+echo "==> Pruning unused Docker images"
+docker image prune -a -f || true
+
 echo "==> Deployment complete — active=$NEW_COLOR (tag=$IMAGE_TAG)"
