@@ -14,6 +14,7 @@ import guestbookRouter from "@/domain/guestbook/guestbook.router";
 import uploadRouter from "@/domain/upload/upload.router";
 import adminRouter from "@/domain/admin/admin.router";
 import rsvpRouter from "@/domain/rsvp/rsvp.router";
+import ogRouter from "@/domain/og/og.router";
 import { ensureSession } from "@/middleware/session";
 import { issueCsrfToken, verifyCsrf } from "@/middleware/csrf";
 
@@ -79,6 +80,7 @@ app.use("/api/guestbooks", verifyCsrf, guestbookRouter);
 app.use("/api/uploads", verifyCsrf, uploadRouter);
 app.use("/api/admin", verifyCsrf, adminRouter);
 app.use("/api/rsvp", verifyCsrf, rsvpRouter);
+app.use("/api/og", ogRouter);
 
 app.use(errorHandler);
 

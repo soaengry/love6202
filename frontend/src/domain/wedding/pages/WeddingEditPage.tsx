@@ -24,6 +24,17 @@ export const WeddingEditPage: FC = () => {
   const venueLat = watch("wedding.venueLat");
   const venueLng = watch("wedding.venueLng");
 
+  const handlePrev_ = () => {
+    if (step === 3) setStep(1); // skip hidden schedule step
+    else handlePrev();
+  };
+
+  const handleNext_ = async () => {
+    const prevStep = step;
+    await handleNext();
+    if (prevStep === 1) setStep(3); // skip hidden schedule step
+  };
+
   // queryWeddingId를 의존성에 포함해 URL 변경 시 재페칭
   useEffect(() => {
     let cancelled = false;
@@ -94,8 +105,9 @@ export const WeddingEditPage: FC = () => {
       step={step}
       totalSteps={TOTAL_STEPS}
       onStepClick={setStep}
-      onNext={handleNext}
-      onPrev={handlePrev}
+      onNext={handleNext_}
+      onPrev={handlePrev_}
+      showScheduleStep={false}
       onSubmit={onSubmit}
       isSubmitting={isSubmitting}
       submitLabel="수정 완료"
