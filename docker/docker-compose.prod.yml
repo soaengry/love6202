@@ -85,6 +85,7 @@ services:
       - /home/ubuntu/app/nginx/upstream.conf:/etc/nginx/conf.d/upstream.conf:ro
       - /home/ubuntu/app/frontend/dist:/usr/share/nginx/html:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /home/ubuntu/app/data/certbot-webroot:/var/www/certbot:ro
     depends_on:
       - backend-blue
     networks:
