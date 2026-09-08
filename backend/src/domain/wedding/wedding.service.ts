@@ -1,6 +1,6 @@
 import prisma from "@/prisma";
 import { AppError } from "@/util/appError";
-import { uploadImage, deleteFile } from "@/service/s3.service";
+import { uploadOptimizedImage, deleteFile } from "@/service/s3.service";
 import { geocode } from "@/service/kakao.service";
 import { WeddingErrorCode } from "./wedding.error";
 import {
@@ -103,13 +103,13 @@ async function uploadWeddingImages(files: WeddingFiles): Promise<{
   }
 
   const heroImageUrls = await Promise.all(
-    heroFiles.map((f) => uploadImage(f, "weddings/heroes")),
+    heroFiles.map((f) => uploadOptimizedImage(f, "weddings/heroes", 1920)),
   );
   const groomProfileUrl = files.groomProfileImage?.[0]
-    ? await uploadImage(files.groomProfileImage[0], "weddings/profiles")
+    ? await uploadOptimizedImage(files.groomProfileImage[0], "weddings/profiles", 400, 80)
     : null;
   const brideProfileUrl = files.brideProfileImage?.[0]
-    ? await uploadImage(files.brideProfileImage[0], "weddings/profiles")
+    ? await uploadOptimizedImage(files.brideProfileImage[0], "weddings/profiles", 400, 80)
     : null;
 
   return { heroImageUrls, groomProfileUrl, brideProfileUrl };
