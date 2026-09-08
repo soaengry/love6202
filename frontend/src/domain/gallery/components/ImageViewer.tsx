@@ -142,7 +142,7 @@ export const ImageViewer: FC<ImageViewerProps> = ({
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
               key={current.id}
-              className="image-viewer-slide relative w-full h-full flex items-center justify-center px-14"
+              className="image-viewer-slide relative w-full h-full flex items-center justify-center"
               custom={direction}
               variants={slideVariants}
               initial="enter"
