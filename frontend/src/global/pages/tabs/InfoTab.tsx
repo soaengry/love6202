@@ -65,6 +65,14 @@ const LandingSection: FC<InfoTabProps> = ({ data }) => {
   const { wedding, heroImages, couples } = data;
   const images = [...heroImages].sort((a, b) => a.orderIndex - b.orderIndex);
   const [current, setCurrent] = useState(0);
+  // 최초에는 첫 슬라이드만 로드, 이후 노출되는 시점에 순차 로드 (초기 로딩 속도 개선)
+  const [loadedIndices, setLoadedIndices] = useState<number[]>(
+    () => (images.length ? [0] : []),
+  );
+
+  useEffect(() => {
+    setLoadedIndices((prev) => (prev.includes(current) ? prev : [...prev, current]));
+  }, [current]);
 
   const groom = couples.find((c) => c.role === "GROOM");
   const bride = couples.find((c) => c.role === "BRIDE");
@@ -100,6 +108,7 @@ const LandingSection: FC<InfoTabProps> = ({ data }) => {
         <div className="relative w-full h-full" style={{ minHeight: "85vh" }}>
           {images.map((img, i) => {
             const isActive = i === current;
+            const isLoaded = loadedIndices.includes(i);
             return (
               <motion.div
                 key={img.imageUrl}
@@ -108,16 +117,22 @@ const LandingSection: FC<InfoTabProps> = ({ data }) => {
                 className="absolute inset-0"
               >
                 {/* 활성화 시 key 교체 → Ken Burns 재시작. img 데이터는 브라우저 캐시 제공 */}
-                <motion.img
-                  key={isActive ? `active-${current}` : i}
-                  src={img.imageUrl}
-                  alt={`슬라이드 ${i + 1}`}
-                  className="w-full h-full object-cover"
-                  style={{ minHeight: "85vh" }}
-                  initial={{ scale: 1.08 }}
-                  animate={{ scale: 1.0 }}
-                  transition={{ duration: 6, ease: "easeOut" }}
-                />
+                {/* 첫 슬라이드만 즉시 로드하고 나머지는 실제로 노출되는 시점에 로드 */}
+                {isLoaded && (
+                  <motion.img
+                    key={isActive ? `active-${current}` : i}
+                    src={img.imageUrl}
+                    alt={`슬라이드 ${i + 1}`}
+                    className="w-full h-full object-cover"
+                    style={{ minHeight: "85vh" }}
+                    initial={{ scale: 1.08 }}
+                    animate={{ scale: 1.0 }}
+                    transition={{ duration: 6, ease: "easeOut" }}
+                    {...(i === 0
+                      ? { fetchPriority: "high" as const }
+                      : { loading: "lazy" as const })}
+                  />
+                )}
               </motion.div>
             );
           })}

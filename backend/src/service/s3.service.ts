@@ -39,6 +39,31 @@ export async function uploadImage(
   return `https://${env.AWS_BUCKET}.s3.${env.AWS_REGION}.amazonaws.com/${key}`;
 }
 
+export async function uploadOptimizedImage(
+  file: Express.Multer.File,
+  folder: string,
+  maxSize: number,
+  quality = 85,
+): Promise<string> {
+  const key = `${folder}/${crypto.randomUUID()}.jpg`;
+
+  const buffer = await sharp(file.buffer)
+    .resize(maxSize, maxSize, { fit: "inside", withoutEnlargement: true })
+    .jpeg({ quality })
+    .toBuffer();
+
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: env.AWS_BUCKET,
+      Key: key,
+      Body: buffer,
+      ContentType: "image/jpeg",
+    }),
+  );
+
+  return `https://${env.AWS_BUCKET}.s3.${env.AWS_REGION}.amazonaws.com/${key}`;
+}
+
 export async function uploadImageWithThumbnail(
   file: Express.Multer.File,
   folder = "galleries",
