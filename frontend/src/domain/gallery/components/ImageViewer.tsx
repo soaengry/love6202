@@ -155,13 +155,18 @@ export const ImageViewer: FC<ImageViewerProps> = ({
             >
               {/* 이미지 보호 오버레이 — pointer-events:none으로 클릭을 img에 투과 */}
               <div className="image-protect absolute inset-0 z-10" style={{ pointerEvents: "none" }} />
-              <img
-                src={current.displayUrl ?? current.imageUrl}
-                alt={current.caption ?? "갤러리 이미지"}
-                className="gallery-image max-w-full max-h-full object-contain"
-                draggable={false}
-                onClick={(e) => e.stopPropagation()}
-              />
+              <picture>
+                {current.displayWebpUrl && (
+                  <source type="image/webp" srcSet={current.displayWebpUrl} />
+                )}
+                <img
+                  src={current.displayUrl ?? current.imageUrl}
+                  alt={current.caption ?? "갤러리 이미지"}
+                  className="gallery-image max-w-full max-h-full object-contain"
+                  draggable={false}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </picture>
             </motion.div>
           </AnimatePresence>
 

@@ -24,8 +24,15 @@ const WEDDING_INCLUDE = {
 
 // ─── Sub-resource builders ───────────────────────────────
 
-function buildHeroImages(urls: string[]) {
-  return urls.map((url, i) => ({ imageUrl: url, orderIndex: i }));
+type HeroImageInput = {
+  imageUrl: string;
+  webpUrl: string | null;
+  width: number | null;
+  height: number | null;
+};
+
+function buildHeroImages(images: HeroImageInput[]) {
+  return images.map((img, i) => ({ ...img, orderIndex: i }));
 }
 
 function buildCouples(
@@ -93,7 +100,7 @@ type WeddingFiles = {
 };
 
 async function uploadWeddingImages(files: WeddingFiles): Promise<{
-  heroImageUrls: string[];
+  heroImages: HeroImageInput[];
   groomProfileUrl: string | null;
   brideProfileUrl: string | null;
 }> {
@@ -102,17 +109,24 @@ async function uploadWeddingImages(files: WeddingFiles): Promise<{
     throw AppError.from(WeddingErrorCode.HERO_IMAGE_LIMIT_EXCEEDED);
   }
 
-  const heroImageUrls = await Promise.all(
+  const uploadedHeroImages = await Promise.all(
     heroFiles.map((f) => uploadOptimizedImage(f, "weddings/heroes", 1920)),
   );
+  const heroImages: HeroImageInput[] = uploadedHeroImages.map((h) => ({
+    imageUrl: h.url,
+    webpUrl: h.webpUrl,
+    width: h.width,
+    height: h.height,
+  }));
+  // 프로필 이미지는 webp 사본을 저장할 컬럼이 없으므로 생성하지 않음 (orphan 방지)
   const groomProfileUrl = files.groomProfileImage?.[0]
-    ? await uploadOptimizedImage(files.groomProfileImage[0], "weddings/profiles", 400, 80)
+    ? (await uploadOptimizedImage(files.groomProfileImage[0], "weddings/profiles", 400, 80, false)).url
     : null;
   const brideProfileUrl = files.brideProfileImage?.[0]
-    ? await uploadOptimizedImage(files.brideProfileImage[0], "weddings/profiles", 400, 80)
+    ? (await uploadOptimizedImage(files.brideProfileImage[0], "weddings/profiles", 400, 80, false)).url
     : null;
 
-  return { heroImageUrls, groomProfileUrl, brideProfileUrl };
+  return { heroImages, groomProfileUrl, brideProfileUrl };
 }
 
 async function cleanupUploadedImages(urls: (string | null)[]): Promise<void> {
@@ -137,7 +151,7 @@ export async function createWedding(
     throw AppError.from(WeddingErrorCode.WEDDING_ALREADY_EXISTS);
   }
 
-  const { heroImageUrls, groomProfileUrl, brideProfileUrl } =
+  const { heroImages, groomProfileUrl, brideProfileUrl } =
     await uploadWeddingImages(files);
 
   let wedding;
@@ -156,7 +170,7 @@ export async function createWedding(
           parkingInfo: body.wedding.parkingInfo || null,
           mealInfo: body.wedding.mealInfo || null,
           greeting: body.wedding.greeting || null,
-          heroImages: { create: buildHeroImages(heroImageUrls) },
+          heroImages: { create: buildHeroImages(heroImages) },
           couples: { create: buildCouples(body.couples, groomProfileUrl, brideProfileUrl) },
           accounts: { create: buildAccounts(body.accounts) },
           schedules: { create: buildSchedules(body.schedules) },
@@ -182,7 +196,11 @@ export async function createWedding(
       return created;
     });
   } catch (err) {
-    await cleanupUploadedImages([...heroImageUrls, groomProfileUrl, brideProfileUrl]);
+    await cleanupUploadedImages([
+      ...heroImages.flatMap((h) => [h.imageUrl, h.webpUrl]),
+      groomProfileUrl,
+      brideProfileUrl,
+    ]);
     throw err;
   }
 
@@ -217,16 +235,20 @@ export async function updateWedding(
 
   const currentHeroImages = await prisma.heroImage.findMany({ where: { weddingId } });
 
-  const { heroImageUrls: newHeroImageUrls, groomProfileUrl: newGroomUrl, brideProfileUrl: newBrideUrl } =
+  const { heroImages: newHeroImages, groomProfileUrl: newGroomUrl, brideProfileUrl: newBrideUrl } =
     await uploadWeddingImages(files);
 
   const existingHeroUrls: string[] = body.existingHeroImageUrls ?? [];
-  const allHeroImageUrls = [...existingHeroUrls, ...newHeroImageUrls];
+  // 유지되는 기존 히어로 이미지는 webp/width/height 메타데이터도 함께 보존
+  const keptHeroImages: HeroImageInput[] = currentHeroImages
+    .filter((h) => existingHeroUrls.includes(h.imageUrl))
+    .map((h) => ({ imageUrl: h.imageUrl, webpUrl: h.webpUrl, width: h.width, height: h.height }));
+  const allHeroImages = [...keptHeroImages, ...newHeroImages];
 
-  // 제거된 히어로 이미지 URL (유지하지 않는 기존 이미지)
+  // 제거된 히어로 이미지 (유지하지 않는 기존 이미지) — jpeg/webp 사본 모두 삭제 대상
   const removedHeroUrls = currentHeroImages
-    .map((h) => h.imageUrl)
-    .filter((url) => !existingHeroUrls.includes(url));
+    .filter((h) => !existingHeroUrls.includes(h.imageUrl))
+    .flatMap((h) => [h.imageUrl, h.webpUrl]);
   const groomProfileUrl = newGroomUrl ?? existingGroomProfileUrl;
   const brideProfileUrl = newBrideUrl ?? existingBrideProfileUrl;
 
@@ -265,7 +287,7 @@ export async function updateWedding(
           mealInfo: body.wedding.mealInfo || null,
           greeting: body.wedding.greeting || null,
           version: { increment: 1 },
-          heroImages: { create: buildHeroImages(allHeroImageUrls) },
+          heroImages: { create: buildHeroImages(allHeroImages) },
           couples: { create: buildCouples(body.couples, groomProfileUrl, brideProfileUrl) },
           accounts: { create: buildAccounts(body.accounts) },
           schedules: { create: buildSchedules(body.schedules) },
@@ -280,7 +302,11 @@ export async function updateWedding(
       return result;
     });
   } catch (err) {
-    await cleanupUploadedImages([...newHeroImageUrls, newGroomUrl, newBrideUrl]);
+    await cleanupUploadedImages([
+      ...newHeroImages.flatMap((h) => [h.imageUrl, h.webpUrl]),
+      newGroomUrl,
+      newBrideUrl,
+    ]);
     throw err;
   }
 

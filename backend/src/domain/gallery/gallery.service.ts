@@ -39,24 +39,29 @@ export async function uploadImages(
   });
   let nextOrder = (maxOrder._max.orderIndex ?? -1) + 1;
 
-  // S3 업로드 (원본 + 웹최적화 + 썸네일) — 순차 처리로 메모리 peak 제한
-  const uploadResults: { imageUrl: string; displayUrl: string; thumbnailUrl: string; originalKey: string }[] = [];
+  // S3 업로드 (원본 + 웹최적화 + 썸네일, 각각 JPEG/WebP) — 순차 처리로 메모리 peak 제한
+  const uploadResults: Awaited<ReturnType<typeof uploadImageWithThumbnail>>[] = [];
   for (const file of files) {
     uploadResults.push(await uploadImageWithThumbnail(file));
   }
 
   // DB 저장
   const galleries = await prisma.$transaction(
-    uploadResults.map(({ imageUrl, displayUrl, thumbnailUrl }, i) =>
-      prisma.gallery.create({
-        data: {
-          weddingId,
-          imageUrl,
-          displayUrl,
-          thumbnailUrl,
-          orderIndex: nextOrder + i,
-        },
-      }),
+    uploadResults.map(
+      ({ imageUrl, displayUrl, displayWebpUrl, thumbnailUrl, thumbnailWebpUrl, width, height }, i) =>
+        prisma.gallery.create({
+          data: {
+            weddingId,
+            imageUrl,
+            displayUrl,
+            displayWebpUrl,
+            thumbnailUrl,
+            thumbnailWebpUrl,
+            width,
+            height,
+            orderIndex: nextOrder + i,
+          },
+        }),
     ),
   );
 
@@ -98,7 +103,14 @@ export async function deleteGalleries(
   userRole: string,
   ids: number[],
 ): Promise<void> {
-  let galleries: { id: number; imageUrl: string; thumbnailUrl: string | null }[];
+  let galleries: {
+    id: number;
+    imageUrl: string;
+    displayUrl: string | null;
+    displayWebpUrl: string | null;
+    thumbnailUrl: string | null;
+    thumbnailWebpUrl: string | null;
+  }[];
 
   if (userRole === "ADMIN") {
     galleries = await prisma.gallery.findMany({
@@ -118,12 +130,12 @@ export async function deleteGalleries(
     throw AppError.from(GalleryErrorCode.GALLERY_NOT_FOUND);
   }
 
-  // S3 파일 삭제
-  const deletePromises = galleries.flatMap((g) => {
-    const tasks = [deleteFile(g.imageUrl)];
-    if (g.thumbnailUrl) tasks.push(deleteFile(g.thumbnailUrl));
-    return tasks;
-  });
+  // S3 파일 삭제 (원본 + display/thumbnail의 JPEG·WebP 사본 전부)
+  const deletePromises = galleries.flatMap((g) =>
+    [g.imageUrl, g.displayUrl, g.displayWebpUrl, g.thumbnailUrl, g.thumbnailWebpUrl]
+      .filter((url): url is string => !!url)
+      .map(deleteFile),
+  );
   await Promise.allSettled(deletePromises);
 
   // DB 삭제

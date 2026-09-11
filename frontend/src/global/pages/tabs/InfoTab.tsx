@@ -124,19 +124,22 @@ const LandingSection: FC<InfoTabProps> = ({ data, setActiveTab }) => {
                 {/* 활성화 시 key 교체 → Ken Burns 재시작. img 데이터는 브라우저 캐시 제공 */}
                 {/* 첫 슬라이드만 즉시 로드하고 나머지는 실제로 노출되는 시점에 로드 */}
                 {isLoaded && (
-                  <motion.img
-                    key={isActive ? `active-${current}` : i}
-                    src={img.imageUrl}
-                    alt={`슬라이드 ${i + 1}`}
-                    className="w-full h-full object-cover"
-                    style={{ minHeight: "85vh" }}
-                    initial={{ scale: 1.08 }}
-                    animate={{ scale: 1.0 }}
-                    transition={{ duration: 6, ease: "easeOut" }}
-                    {...(i === 0
-                      ? { fetchPriority: "high" as const }
-                      : { loading: "lazy" as const })}
-                  />
+                  <picture>
+                    {img.webpUrl && <source type="image/webp" srcSet={img.webpUrl} />}
+                    <motion.img
+                      key={isActive ? `active-${current}` : i}
+                      src={img.imageUrl}
+                      alt={`슬라이드 ${i + 1}`}
+                      className="w-full h-full object-cover"
+                      style={{ minHeight: "85vh" }}
+                      initial={{ scale: 1.08 }}
+                      animate={{ scale: 1.0 }}
+                      transition={{ duration: 6, ease: "easeOut" }}
+                      {...(i === 0
+                        ? { fetchPriority: "high" as const }
+                        : { loading: "lazy" as const })}
+                    />
+                  </picture>
                 )}
               </motion.div>
             );
