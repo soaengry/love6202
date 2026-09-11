@@ -26,7 +26,10 @@ export interface WeddingResponse {
 export interface HeroImageResponse {
   id: number;
   imageUrl: string;
+  webpUrl: string | null;
   thumbnailUrl: string | null;
+  width: number | null;
+  height: number | null;
   orderIndex: number;
 }
 
