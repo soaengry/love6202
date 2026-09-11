@@ -63,7 +63,7 @@ export const HomePage: FC = () => {
 
   const weddingId = wedding.wedding.id;
   const tabContent: Record<TabId, React.ReactNode> = {
-    info:      <InfoTab data={wedding} />,
+    info:      <InfoTab data={wedding} setActiveTab={setActiveTab} />,
     rsvp:      <RsvpTab weddingId={weddingId} />,
     guestbook: <GuestbookTab weddingId={weddingId} setActiveTab={setActiveTab} />,
     gallery:   <GalleryTab weddingId={weddingId} setActiveTab={setActiveTab} />,
