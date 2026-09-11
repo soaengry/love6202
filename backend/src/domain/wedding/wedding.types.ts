@@ -25,7 +25,10 @@ export interface WeddingResponse {
 export interface HeroImageResponse {
   id: number;
   imageUrl: string;
+  webpUrl: string | null;
   thumbnailUrl: string | null;
+  width: number | null;
+  height: number | null;
   orderIndex: number;
 }
 
@@ -121,7 +124,10 @@ export function toWeddingDetailResponse(w: WeddingWithRelations): WeddingDetailR
       .map((h) => ({
         id: h.id,
         imageUrl: h.imageUrl,
+        webpUrl: h.webpUrl,
         thumbnailUrl: h.thumbnailUrl,
+        width: h.width,
+        height: h.height,
         orderIndex: h.orderIndex,
       })),
     couples: w.couples.map((c) => ({

@@ -12,9 +12,11 @@ import type {
   AccountSide,
 } from "@/domain/wedding/types.ts";
 import { ENV } from "@/global/config/env.ts";
+import type { TabId } from "@/global/components/BottomNav.tsx";
 
 interface InfoTabProps {
   data: WeddingDetailResponse;
+  setActiveTab: (tab: TabId) => void;
 }
 
 const slideUp = {
@@ -61,7 +63,7 @@ const SectionLabel: FC<{ text: string }> = ({ text }) => {
 };
 
 // ─── Landing Section ───
-const LandingSection: FC<InfoTabProps> = ({ data }) => {
+const LandingSection: FC<InfoTabProps> = ({ data, setActiveTab }) => {
   const { wedding, heroImages, couples } = data;
   const images = [...heroImages].sort((a, b) => a.orderIndex - b.orderIndex);
   const [current, setCurrent] = useState(0);
@@ -101,8 +103,11 @@ const LandingSection: FC<InfoTabProps> = ({ data }) => {
 
   return (
     <section
-      className="landing-section relative w-full overflow-hidden bg-bg-primary"
+      className="landing-section relative w-full overflow-hidden bg-bg-primary cursor-pointer"
       style={{ minHeight: "85vh" }}
+      onClick={() => setActiveTab("gallery")}
+      role="button"
+      aria-label="웨딩 갤러리로 이동"
     >
       {images.length > 0 ? (
         <div className="relative w-full h-full" style={{ minHeight: "85vh" }}>
@@ -119,19 +124,22 @@ const LandingSection: FC<InfoTabProps> = ({ data }) => {
                 {/* 활성화 시 key 교체 → Ken Burns 재시작. img 데이터는 브라우저 캐시 제공 */}
                 {/* 첫 슬라이드만 즉시 로드하고 나머지는 실제로 노출되는 시점에 로드 */}
                 {isLoaded && (
-                  <motion.img
-                    key={isActive ? `active-${current}` : i}
-                    src={img.imageUrl}
-                    alt={`슬라이드 ${i + 1}`}
-                    className="w-full h-full object-cover"
-                    style={{ minHeight: "85vh" }}
-                    initial={{ scale: 1.08 }}
-                    animate={{ scale: 1.0 }}
-                    transition={{ duration: 6, ease: "easeOut" }}
-                    {...(i === 0
-                      ? { fetchPriority: "high" as const }
-                      : { loading: "lazy" as const })}
-                  />
+                  <picture>
+                    {img.webpUrl && <source type="image/webp" srcSet={img.webpUrl} />}
+                    <motion.img
+                      key={isActive ? `active-${current}` : i}
+                      src={img.imageUrl}
+                      alt={`슬라이드 ${i + 1}`}
+                      className="w-full h-full object-cover"
+                      style={{ minHeight: "85vh" }}
+                      initial={{ scale: 1.08 }}
+                      animate={{ scale: 1.0 }}
+                      transition={{ duration: 6, ease: "easeOut" }}
+                      {...(i === 0
+                        ? { fetchPriority: "high" as const }
+                        : { loading: "lazy" as const })}
+                    />
+                  </picture>
                 )}
               </motion.div>
             );
@@ -186,7 +194,10 @@ const LandingSection: FC<InfoTabProps> = ({ data }) => {
             {images.map((_, i) => (
               <button
                 key={i}
-                onClick={() => setCurrent(i)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrent(i);
+                }}
                 className={`w-2 h-2 rounded-full transition-all duration-300 cursor-pointer ${
                   i === current ? "bg-white w-6" : "bg-white/40"
                 }`}
@@ -490,7 +501,7 @@ const LocationSection: FC<{ wedding: WeddingDetailResponse["wedding"] }> = ({
 };
 
 // ─── Information Section (Dress Code, Parking, Meals, Transport) ───
-const InformationSection: FC<InfoTabProps> = ({ data }) => {
+const InformationSection: FC<{ data: WeddingDetailResponse }> = ({ data }) => {
   const { wedding, transportations } = data;
   const { dressCode, notice, parkingInfo, mealInfo } = wedding;
   const hasContent =
@@ -717,10 +728,10 @@ const GiftSection: FC<{ accounts: AccountResponse[] }> = ({ accounts }) => {
 };
 
 // ─── Main InfoTab ───
-export const InfoTab: FC<InfoTabProps> = ({ data }) => {
+export const InfoTab: FC<InfoTabProps> = ({ data, setActiveTab }) => {
   return (
     <div className="info-tab -mx-6 -mt-6">
-      <LandingSection data={data} />
+      <LandingSection data={data} setActiveTab={setActiveTab} />
       <Divider />
       <GreetingSection greeting={data.wedding.greeting} />
       <CoupleSection couples={data.couples} />

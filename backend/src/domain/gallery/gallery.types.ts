@@ -5,7 +5,11 @@ export interface GalleryResponse {
   weddingId: number;
   imageUrl: string;
   displayUrl: string | null;
+  displayWebpUrl: string | null;
   thumbnailUrl: string | null;
+  thumbnailWebpUrl: string | null;
+  width: number | null;
+  height: number | null;
   caption: string | null;
   orderIndex: number;
   createdAt: string;
@@ -25,7 +29,11 @@ export function toGalleryResponse(gallery: Gallery): GalleryResponse {
     weddingId: gallery.weddingId,
     imageUrl: gallery.imageUrl,
     displayUrl: gallery.displayUrl,
+    displayWebpUrl: gallery.displayWebpUrl,
     thumbnailUrl: gallery.thumbnailUrl,
+    thumbnailWebpUrl: gallery.thumbnailWebpUrl,
+    width: gallery.width,
+    height: gallery.height,
     caption: gallery.caption,
     orderIndex: gallery.orderIndex,
     createdAt: gallery.createdAt.toISOString(),
