@@ -103,14 +103,13 @@ const LandingSection: FC<InfoTabProps> = ({ data, setActiveTab }) => {
 
   return (
     <section
-      className="landing-section relative w-full overflow-hidden bg-bg-primary cursor-pointer"
-      style={{ minHeight: "85vh" }}
+      className="landing-section relative w-full h-[calc(100dvh-4rem)] overflow-hidden bg-bg-primary cursor-pointer md:mx-6 md:mt-6 md:w-auto md:h-[min(calc(100dvh-8.5rem),620px)] md:rounded-2xl"
       onClick={() => setActiveTab("gallery")}
       role="button"
       aria-label="웨딩 갤러리로 이동"
     >
       {images.length > 0 ? (
-        <div className="relative w-full h-full" style={{ minHeight: "85vh" }}>
+        <div className="landing-slides absolute inset-0">
           {images.map((img, i) => {
             const isActive = i === current;
             const isLoaded = loadedIndices.includes(i);
@@ -131,7 +130,6 @@ const LandingSection: FC<InfoTabProps> = ({ data, setActiveTab }) => {
                       src={img.imageUrl}
                       alt={`슬라이드 ${i + 1}`}
                       className="w-full h-full object-cover"
-                      style={{ minHeight: "85vh" }}
                       initial={{ scale: 1.08 }}
                       animate={{ scale: 1.0 }}
                       transition={{ duration: 6, ease: "easeOut" }}
@@ -148,9 +146,8 @@ const LandingSection: FC<InfoTabProps> = ({ data, setActiveTab }) => {
         </div>
       ) : (
         <div
-          className="hero-fallback w-full"
+          className="hero-fallback absolute inset-0"
           style={{
-            minHeight: "85vh",
             background:
               "linear-gradient(to bottom, var(--hero-fallback-from), var(--hero-fallback-to))",
           }}
