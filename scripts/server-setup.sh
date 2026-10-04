@@ -25,11 +25,11 @@ sudo systemctl start docker
 sudo usermod -aG docker ubuntu
 
 echo "==> Creating directory structure"
-mkdir -p "$APP_DIR"/{data/{postgres,postgres-dev,redis,redis-dev,certbot-webroot},nginx,scripts,docker/postgres,frontend/dist}
+mkdir -p "$APP_DIR"/{data/{postgres,redis,certbot-webroot},nginx,scripts,docker/postgres,frontend/dist}
 
 echo "==> Creating env file placeholders (fill these in!)"
-touch "$APP_DIR/.env.prod" "$APP_DIR/.env.dev"
-chmod 600 "$APP_DIR/.env.prod" "$APP_DIR/.env.dev"
+touch "$APP_DIR/.env.prod"
+chmod 600 "$APP_DIR/.env.prod"
 
 echo "==> Setting initial active color to blue"
 echo "blue" > "$APP_DIR/.active_color"
@@ -38,9 +38,8 @@ echo ""
 echo "==================================================================="
 echo "Setup complete! Next steps:"
 echo ""
-echo "  1. Fill in env files:"
+echo "  1. Fill in env file:"
 echo "       $APP_DIR/.env.prod"
-echo "       $APP_DIR/.env.dev"
 echo ""
 echo "  2. Install certbot and issue SSL certificate for the primary domains"
 echo "     (nginx isn't running yet, so port 80 is free — use standalone once):"
