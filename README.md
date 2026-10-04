@@ -25,17 +25,14 @@ love6202/
 ├── docker/           # Docker Compose 파일 및 nginx 설정
 │   ├── docker-compose.infra.yml   # PostgreSQL + Redis
 │   ├── docker-compose.prod.yml    # 프로덕션 (Blue/Green)
-│   ├── docker-compose.dev.yml     # 개발 환경
 │   ├── nginx/                     # nginx 설정
 │   └── postgres/init.sql
 ├── scripts/          # 배포 및 서버 초기화 스크립트
 │   ├── server-setup.sh
 │   ├── deploy-prod.sh
-│   ├── deploy-dev.sh
 │   └── health-check.sh
 ├── .github/workflows/
-│   ├── deploy-prod.yml   # main → EC2 Blue/Green 배포
-│   └── deploy-dev.yml    # dev → EC2 Rolling 배포
+│   └── deploy-prod.yml   # main → EC2 Blue/Green 배포
 └── .env.example
 ```
 
