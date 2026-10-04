@@ -71,7 +71,9 @@ const authLimiter = rateLimit({
 });
 
 // auth 라우터는 OAuth2 코드 기반이므로 CSRF 불필요; 나머지는 CSRF 적용
-app.use("/api/auth", authLimiter, authRouter);
+// 로그인 시도에만 제한 적용 — 페이지 접속마다 발생하는 /refresh가 로그인 한도를 소진하지 않도록
+app.use("/api/auth/login", authLimiter);
+app.use("/api/auth", authRouter);
 app.use("/api/users", verifyCsrf, userRouter);
 app.use("/api/weddings", verifyCsrf, weddingRouter);
 app.use("/api/banks", verifyCsrf, bankRouter);
