@@ -142,7 +142,7 @@ export const ImageViewer: FC<ImageViewerProps> = ({
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
               key={current.id}
-              className="image-viewer-slide relative w-full h-full flex items-center justify-center"
+              className="image-viewer-slide relative w-full h-full flex items-center justify-center md:p-10"
               custom={direction}
               variants={slideVariants}
               initial="enter"
@@ -155,7 +155,8 @@ export const ImageViewer: FC<ImageViewerProps> = ({
             >
               {/* 이미지 보호 오버레이 — pointer-events:none으로 클릭을 img에 투과 */}
               <div className="image-protect absolute inset-0 z-10" style={{ pointerEvents: "none" }} />
-              <picture>
+              {/* contents: picture가 박스를 만들지 않아 img의 max-h-full이 슬라이드 높이 기준으로 동작 */}
+              <picture className="contents">
                 {current.displayWebpUrl && (
                   <source type="image/webp" srcSet={current.displayWebpUrl} />
                 )}
