@@ -12,12 +12,22 @@ export const UploadErrorCode = {
   UPLOAD_LIMIT_EXCEEDED: {
     code: "UPLOAD_LIMIT_EXCEEDED",
     status: 400,
-    message: "한 번에 최대 10장까지 업로드할 수 있습니다.",
+    message: "한 번에 최대 20장까지 업로드할 수 있습니다.",
   },
   UPLOAD_WEDDING_NOT_FOUND: {
     code: "UPLOAD_WEDDING_NOT_FOUND",
     status: 404,
     message: "초대장을 찾을 수 없습니다.",
+  },
+  UPLOAD_INVALID_KEY: {
+    code: "UPLOAD_INVALID_KEY",
+    status: 403,
+    message: "업로드 요청 정보가 유효하지 않습니다. 다시 시도해주세요.",
+  },
+  UPLOAD_FILE_NOT_FOUND: {
+    code: "UPLOAD_FILE_NOT_FOUND",
+    status: 404,
+    message: "업로드된 파일을 찾을 수 없습니다. 다시 시도해주세요.",
   },
   UPLOAD_SESSION_REQUIRED: {
     code: "UPLOAD_SESSION_REQUIRED",

@@ -19,3 +19,9 @@ export function toUploadResponse(upload: Upload): UploadResponse {
     createdAt: upload.createdAt.toISOString(),
   };
 }
+
+export interface PresignedUpload {
+  key: string;
+  uploadUrl: string;
+  headers: Record<string, string>;
+}

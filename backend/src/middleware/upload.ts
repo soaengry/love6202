@@ -3,8 +3,7 @@ import type { Request, Response, NextFunction } from "express";
 import { AppError } from "@/util/appError";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB — 프로필·웨딩·히어로
-const MAX_USER_FILE_SIZE = 50 * 1024 * 1024; // 50MB — 갤러리·사용자 사진 업로드
-const MAX_USER_TOTAL_SIZE = 500 * 1024 * 1024; // 500MB — 갤러리·사용자 사진 업로드 합산
+const MAX_USER_FILE_SIZE = 50 * 1024 * 1024; // 50MB — 갤러리 업로드
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 const fileFilter = (
@@ -41,10 +40,6 @@ export const uploadProfileImage = upload.single("profileImage");
 
 export const uploadGalleryImages = userUpload.array("images", 20);
 
-export const MAX_USER_UPLOAD_COUNT = 20;
-
-export const uploadUserImages = userUpload.array("images", MAX_USER_UPLOAD_COUNT);
-
 export const uploadWeddingImages = userUpload.fields([
   { name: "heroImages", maxCount: 4 },
   { name: "groomProfileImage", maxCount: 1 },
@@ -52,7 +47,7 @@ export const uploadWeddingImages = userUpload.fields([
 ]);
 
 // magic bytes로 실제 이미지 파일 여부 검증 (MIME 헤더 스푸핑 방지)
-function isValidImageBuffer(buffer: Buffer): boolean {
+export function isValidImageBuffer(buffer: Buffer): boolean {
   if (buffer.length < 8) return false;
   // JPEG: FF D8 FF
   if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff)
@@ -126,51 +121,6 @@ export function validateUploadedFiles(
         ),
       );
     }
-  }
-
-  next();
-}
-
-export function validateUserUploadFiles(
-  req: Request,
-  _res: Response,
-  next: NextFunction,
-) {
-  const files = collectFiles(req);
-
-  for (const file of files) {
-    if (!isValidImageBuffer(file.buffer)) {
-      const ext = file.originalname.includes(".")
-        ? file.originalname.split(".").pop()?.toUpperCase()
-        : "알 수 없음";
-      const header = file.buffer
-        .slice(0, 8)
-        .toString("hex")
-        .toUpperCase()
-        .match(/../g)
-        ?.join(" ");
-      console.warn(
-        `[upload] 유효하지 않은 파일: ${file.originalname} | 첫 바이트: ${header} | mimetype: ${file.mimetype}`,
-      );
-      return next(
-        new AppError(
-          "INVALID_FILE_TYPE",
-          400,
-          `'${file.originalname}' 파일은 지원하지 않는 형식입니다. (.${ext}) JPG, PNG 파일만 업로드 가능합니다.`,
-        ),
-      );
-    }
-  }
-
-  const totalSize = files.reduce((sum, f) => sum + f.size, 0);
-  if (totalSize > MAX_USER_TOTAL_SIZE) {
-    return next(
-      new AppError(
-        "UPLOAD_TOTAL_SIZE_EXCEEDED",
-        400,
-        "총 업로드 용량은 500MB를 초과할 수 없습니다.",
-      ),
-    );
   }
 
   next();

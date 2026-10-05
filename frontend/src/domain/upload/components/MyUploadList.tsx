@@ -1,9 +1,10 @@
-import { useState, useEffect, type FC } from "react";
+import { useState, useEffect, useRef, type FC } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { IoTrashOutline, IoImageOutline, IoCheckmarkCircle, IoEllipseOutline } from "react-icons/io5";
 import { toast } from "react-toastify";
 import { uploadApi } from "../api/uploadApi";
 import { useMyUploads } from "../hooks/useMyUploads";
+import { UPLOAD_VALIDATION } from "../upload.constants";
 
 interface MyUploadListProps {
   weddingId: number;
@@ -16,9 +17,26 @@ export const MyUploadList: FC<MyUploadListProps> = ({ weddingId, refreshKey }) =
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const pollStartRef = useRef<number | null>(null);
+
   useEffect(() => {
+    pollStartRef.current = null;
     refresh();
   }, [refresh, refreshKey]);
+
+  // 썸네일 생성 대기 중인 사진이 있으면 주기적으로 갱신 (최대 PROCESSING_POLL_MAX_MS)
+  const hasProcessing = uploads.some((upload) => upload.thumbnailUrl == null);
+  useEffect(() => {
+    if (!hasProcessing) {
+      pollStartRef.current = null;
+      return;
+    }
+    pollStartRef.current ??= Date.now();
+    if (Date.now() - pollStartRef.current > UPLOAD_VALIDATION.PROCESSING_POLL_MAX_MS) return;
+
+    const timer = setTimeout(refresh, UPLOAD_VALIDATION.PROCESSING_POLL_MS);
+    return () => clearTimeout(timer);
+  }, [hasProcessing, uploads, refresh]);
 
   const toggleSelect = (id: number) => {
     setSelectedIds((prev) => {
@@ -131,12 +149,20 @@ export const MyUploadList: FC<MyUploadListProps> = ({ weddingId, refreshKey }) =
                 transition={{ duration: 0.2 }}
                 onClick={() => isSelecting && toggleSelect(upload.id)}
               >
-                <img
-                  src={upload.thumbnailUrl ?? upload.imageUrl}
-                  alt=""
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
+                {upload.thumbnailUrl ? (
+                  <img
+                    src={upload.thumbnailUrl}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  // 썸네일 생성 중 — 원본(최대 10MB)을 그리드에 띄우지 않음
+                  <div className="processing-placeholder w-full h-full bg-bg-secondary flex flex-col items-center justify-center gap-1.5">
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                    <span className="text-[10px] text-text-tertiary">처리 중</span>
+                  </div>
+                )}
 
                 {isSelecting && (
                   <div
