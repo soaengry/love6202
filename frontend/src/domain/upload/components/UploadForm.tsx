@@ -68,9 +68,35 @@ export const UploadForm: FC<UploadFormProps> = ({
     setIsUploading(true);
     setProgress(0);
     try {
-      const formData = new FormData();
-      files.forEach((file) => formData.append("images", file));
-      await uploadApi.upload(weddingId, formData, setProgress);
+      // 1) S3 직접 업로드용 URL 발급
+      const { data: presigned } = await uploadApi.presign(
+        weddingId,
+        files.map((file) => ({ contentType: file.type, size: file.size })),
+      );
+
+      // 2) PUT_CONCURRENCY개씩 S3에 직접 전송, 파일별 전송량을 합산해 전체 진행률 표시
+      const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
+      const loadedBytes = files.map(() => 0);
+      const updateProgress = (index: number, loaded: number) => {
+        loadedBytes[index] = loaded;
+        const loadedSum = loadedBytes.reduce((sum, bytes) => sum + bytes, 0);
+        setProgress(Math.min(100, Math.round((loadedSum / totalBytes) * 100)));
+      };
+
+      let nextIndex = 0;
+      const putWorker = async () => {
+        while (nextIndex < files.length) {
+          const index = nextIndex++;
+          await uploadApi.putToS3(presigned[index], files[index], (loaded) => updateProgress(index, loaded));
+          updateProgress(index, files[index].size);
+        }
+      };
+      await Promise.all(
+        Array.from({ length: Math.min(UPLOAD_VALIDATION.PUT_CONCURRENCY, files.length) }, putWorker),
+      );
+
+      // 3) 업로드 완료 등록 (썸네일은 서버에서 비동기 생성)
+      await uploadApi.complete(weddingId, presigned.map(({ key }) => key));
       toast.success(`${files.length}장 업로드 완료`);
 
       previews.forEach(URL.revokeObjectURL);
@@ -163,7 +189,7 @@ export const UploadForm: FC<UploadFormProps> = ({
             {isUploading
               ? progress < 100
                 ? `업로드 중... ${progress}%`
-                : "사진 처리 중..."
+                : "등록 중..."
               : `${files.length}장 업로드`}
           </button>
           {isUploading && (
