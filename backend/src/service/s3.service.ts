@@ -61,7 +61,8 @@ async function resizeVariants(
   quality: number,
   generateWebp = true,
 ): Promise<ResizedVariants> {
-  const pipeline = sharp(buffer).resize(maxWidth, maxHeight, {
+  // rotate(): EXIF Orientation 기준으로 픽셀을 회전 (출력 시 메타데이터가 제거되므로 필수)
+  const pipeline = sharp(buffer).rotate().resize(maxWidth, maxHeight, {
     fit: "inside",
     withoutEnlargement: true,
   });
