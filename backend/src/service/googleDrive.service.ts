@@ -61,14 +61,14 @@ export async function getOrCreateWeddingFolder(weddingId: number): Promise<strin
 }
 
 export async function uploadToDrive(
-  file: { buffer: Buffer; mimetype: string; originalname: string },
+  file: { buffer: Buffer; mimetype: string; name: string },
   folderId: string,
 ): Promise<{ driveFileId: string }> {
   const drive = getDriveClient();
 
   const res = await drive.files.create({
     requestBody: {
-      name: `${Date.now()}-${file.originalname}`,
+      name: file.name,
       parents: [folderId],
     },
     media: {

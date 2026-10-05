@@ -17,7 +17,7 @@ const s3 = new S3Client({
   },
 });
 
-function getExtension(mimetype: string): string {
+export function getExtension(mimetype: string): string {
   if (mimetype === "image/png") return ".png";
   if (mimetype === "image/webp") return ".webp";
   return ".jpg";
