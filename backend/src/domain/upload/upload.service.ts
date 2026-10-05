@@ -3,10 +3,9 @@ import { AppError } from "@/util/appError";
 import { uploadImageWithThumbnail, deleteFileByKey } from "@/service/s3.service";
 import { deleteFromDrive } from "@/service/googleDrive.service";
 import { driveSyncQueue } from "@/config/queue";
+import { MAX_USER_UPLOAD_COUNT } from "@/middleware/upload";
 import { UploadErrorCode } from "./upload.error";
 import { toUploadResponse, type UploadResponse } from "./upload.types";
-
-const MAX_UPLOADS_PER_REQUEST = 11;
 
 // ─── List ───────────────────────────────────────────────
 
@@ -34,7 +33,7 @@ export async function uploadImages(
   weddingId: number,
   files: Express.Multer.File[],
 ): Promise<UploadResponse[]> {
-  if (files.length > MAX_UPLOADS_PER_REQUEST) {
+  if (files.length > MAX_USER_UPLOAD_COUNT) {
     throw AppError.from(UploadErrorCode.UPLOAD_LIMIT_EXCEEDED);
   }
 

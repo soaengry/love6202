@@ -9,10 +9,13 @@ export const uploadApi = {
     });
   },
 
-  upload(weddingId: number, formData: FormData) {
+  upload(weddingId: number, formData: FormData, onProgress?: (percent: number) => void) {
     return api.post<UploadImage[]>(UPLOAD_API.BASE, formData, {
       params: { weddingId },
       headers: { "Content-Type": "multipart/form-data" },
+      onUploadProgress: (e) => {
+        if (onProgress && e.total) onProgress(Math.round((e.loaded / e.total) * 100));
+      },
     });
   },
 

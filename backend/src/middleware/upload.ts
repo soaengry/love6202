@@ -41,7 +41,9 @@ export const uploadProfileImage = upload.single("profileImage");
 
 export const uploadGalleryImages = userUpload.array("images", 20);
 
-export const uploadUserImages = userUpload.array("images", 10);
+export const MAX_USER_UPLOAD_COUNT = 20;
+
+export const uploadUserImages = userUpload.array("images", MAX_USER_UPLOAD_COUNT);
 
 export const uploadWeddingImages = userUpload.fields([
   { name: "heroImages", maxCount: 4 },
