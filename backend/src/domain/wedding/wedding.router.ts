@@ -23,12 +23,8 @@ router.get(
   },
 );
 
-// ─── Protected ──────────────────────────────────────────
-
-router.use(authenticate);
-
-// GET /api/weddings/me — 내 초대장 조회 (/:id 보다 먼저 선언)
-router.get("/me", async (req: Request, res: Response, next: NextFunction) => {
+// GET /api/weddings/me — 내 초대장 조회 (인증 필요, /:id 보다 먼저 선언)
+router.get("/me", authenticate, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const result = await weddingService.getMyWedding(req.userId!);
     res.json(apiResponse.ok("초대장 조회 성공", result));
@@ -37,7 +33,7 @@ router.get("/me", async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
-// GET /api/weddings/:id — 초대장 공개 조회
+// GET /api/weddings/:id — 초대장 공개 조회 (QR 링크 등 비로그인 하객 접근)
 router.get(
   "/:id",
   validate({ params: weddingIdParamSchema }),
@@ -51,6 +47,10 @@ router.get(
     }
   },
 );
+
+// ─── Protected ──────────────────────────────────────────
+
+router.use(authenticate);
 
 // POST /api/weddings — 초대장 생성
 router.post(
