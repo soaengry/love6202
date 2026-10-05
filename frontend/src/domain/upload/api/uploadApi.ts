@@ -1,6 +1,7 @@
+import axios from "axios";
 import api from "@/global/api/axiosInstance";
 import { UPLOAD_API } from "../upload.constants";
-import type { UploadImage } from "../types";
+import type { UploadImage, PresignFileRequest, PresignedUpload } from "../types";
 
 export const uploadApi = {
   getMyUploads(weddingId: number) {
@@ -9,14 +10,24 @@ export const uploadApi = {
     });
   },
 
-  upload(weddingId: number, formData: FormData, onProgress?: (percent: number) => void) {
-    return api.post<UploadImage[]>(UPLOAD_API.BASE, formData, {
+  presign(weddingId: number, files: PresignFileRequest[]) {
+    return api.post<PresignedUpload[]>(UPLOAD_API.PRESIGN, { files }, {
       params: { weddingId },
-      headers: { "Content-Type": "multipart/form-data" },
-      timeout: 300_000, // 최대 20장 전송 + 파일당 S3 5회 업로드·sharp 처리 → 최대 5분
-      onUploadProgress: (e) => {
-        if (onProgress && e.total) onProgress(Math.round((e.loaded / e.total) * 100));
-      },
+    });
+  },
+
+  // S3 presigned URL로 직접 PUT — API 서버를 거치지 않으므로 공용 인스턴스(쿠키·CSRF·응답 변환) 대신 기본 axios 사용
+  putToS3(upload: PresignedUpload, file: File, onProgress?: (loaded: number) => void) {
+    return axios.put(upload.uploadUrl, file, {
+      headers: upload.headers,
+      timeout: 300_000,
+      onUploadProgress: (e) => onProgress?.(e.loaded),
+    });
+  },
+
+  complete(weddingId: number, keys: string[]) {
+    return api.post<UploadImage[]>(UPLOAD_API.COMPLETE, { keys }, {
+      params: { weddingId },
     });
   },
 

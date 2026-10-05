@@ -1,11 +1,10 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { optionalAuth } from "@/middleware/auth";
-import { uploadUserImages, validateUserUploadFiles } from "@/middleware/upload";
 import { validate } from "@/middleware/validate";
 import { apiResponse } from "@/util/apiResponse";
 import { AppError } from "@/util/appError";
 import { UploadErrorCode } from "./upload.error";
-import { uploadQuerySchema, uploadDeleteParamsSchema } from "./upload.schema";
+import { uploadQuerySchema, uploadDeleteParamsSchema, presignBodySchema, completeBodySchema } from "./upload.schema";
 import { streamFromDrive } from "@/service/googleDrive.service";
 import * as uploadService from "./upload.service";
 
@@ -50,12 +49,10 @@ router.get(
   },
 );
 
-// POST /api/uploads?weddingId=1 — 사진 업로드 (S3 우선, Drive는 백그라운드 동기화)
+// POST /api/uploads/presign?weddingId=1 — S3 직접 업로드용 PUT URL 발급
 router.post(
-  "/",
-  uploadUserImages,
-  validateUserUploadFiles,
-  validate({ query: uploadQuerySchema }),
+  "/presign",
+  validate({ query: uploadQuerySchema, body: presignBodySchema }),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const sessionId = req.sessionId;
@@ -64,12 +61,29 @@ router.post(
       }
 
       const { weddingId } = uploadQuerySchema.parse(req.query);
-      const files = req.files as Express.Multer.File[] | undefined;
-      if (!files || files.length === 0) {
-        return res.status(400).json(apiResponse.error(400, "업로드할 이미지가 없습니다."));
+      const { files } = presignBodySchema.parse(req.body);
+      const result = await uploadService.createPresignedUploads(sessionId, weddingId, files);
+      res.json(apiResponse.ok("업로드 URL 발급 성공", result));
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// POST /api/uploads/complete?weddingId=1 — S3 업로드 완료 등록 (썸네일·Drive는 백그라운드 처리)
+router.post(
+  "/complete",
+  validate({ query: uploadQuerySchema, body: completeBodySchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const sessionId = req.sessionId;
+      if (!sessionId) {
+        throw AppError.from(UploadErrorCode.UPLOAD_SESSION_REQUIRED);
       }
 
-      const result = await uploadService.uploadImages(sessionId, req.userId, weddingId, files);
+      const { weddingId } = uploadQuerySchema.parse(req.query);
+      const { keys } = completeBodySchema.parse(req.body);
+      const result = await uploadService.completeUploads(sessionId, req.userId, weddingId, keys);
       res.status(201).json(apiResponse.created("업로드 성공", result));
     } catch (err) {
       next(err);
