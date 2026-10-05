@@ -17,6 +17,7 @@ export const UploadForm: FC<UploadFormProps> = ({
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const validateFiles = (newFiles: File[]): File[] => {
@@ -65,10 +66,11 @@ export const UploadForm: FC<UploadFormProps> = ({
     if (!files.length || isUploading) return;
 
     setIsUploading(true);
+    setProgress(0);
     try {
       const formData = new FormData();
       files.forEach((file) => formData.append("images", file));
-      await uploadApi.upload(weddingId, formData);
+      await uploadApi.upload(weddingId, formData, setProgress);
       toast.success(`${files.length}장 업로드 완료`);
 
       previews.forEach(URL.revokeObjectURL);
@@ -86,7 +88,9 @@ export const UploadForm: FC<UploadFormProps> = ({
     <div className="upload-form space-y-4">
       {/* 드래그 앤 드롭 영역 */}
       <div
-        className="upload-dropzone border-2 border-dashed border-border rounded-2xl p-8 text-center cursor-pointer hover:border-primary/50 transition-colors"
+        className={`upload-dropzone border-2 border-dashed border-border rounded-2xl p-8 text-center transition-colors ${
+          isUploading ? "opacity-50 pointer-events-none" : "cursor-pointer hover:border-primary/50"
+        }`}
         onClick={() => inputRef.current?.click()}
       >
         <IoCloudUploadOutline className="text-4xl text-text-secondary mx-auto mb-3" />
@@ -127,13 +131,19 @@ export const UploadForm: FC<UploadFormProps> = ({
               transition={{ duration: 0.2 }}
             >
               <img src={src} alt="" className="w-full h-full object-cover" />
-              <button
-                type="button"
-                onClick={() => removeFile(i)}
-                className="remove-button absolute top-1 right-1 text-white bg-black/50 rounded-full cursor-pointer"
-              >
-                <IoCloseCircleOutline className="text-lg" />
-              </button>
+              {isUploading ? (
+                <div className="uploading-overlay absolute inset-0 bg-black/40 flex items-center justify-center">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => removeFile(i)}
+                  className="remove-button absolute top-1 right-1 text-white bg-black/50 rounded-full cursor-pointer"
+                >
+                  <IoCloseCircleOutline className="text-lg" />
+                </button>
+              )}
             </motion.div>
           ))}
         </AnimatePresence>
@@ -141,13 +151,32 @@ export const UploadForm: FC<UploadFormProps> = ({
 
       {/* 업로드 버튼 */}
       {files.length > 0 && (
-        <button
-          onClick={handleUpload}
-          disabled={isUploading}
-          className="upload-button w-full py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary-dark transition-colors disabled:opacity-50 cursor-pointer"
-        >
-          {isUploading ? "업로드 중..." : `${files.length}장 업로드`}
-        </button>
+        <div className="upload-action space-y-2">
+          <button
+            onClick={handleUpload}
+            disabled={isUploading}
+            className="upload-button w-full py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary-dark transition-colors disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
+          >
+            {isUploading && (
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+            )}
+            {isUploading
+              ? progress < 100
+                ? `업로드 중... ${progress}%`
+                : "사진 처리 중..."
+              : `${files.length}장 업로드`}
+          </button>
+          {isUploading && (
+            <div className="upload-progress-track h-1.5 w-full bg-bg-secondary rounded-full overflow-hidden">
+              <motion.div
+                className="upload-progress-bar h-full bg-primary"
+                initial={{ width: 0 }}
+                animate={{ width: `${progress}%` }}
+                transition={{ duration: 0.2 }}
+              />
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
