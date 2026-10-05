@@ -1,11 +1,27 @@
+import crypto from "crypto";
 import prisma from "@/prisma";
 import { AppError } from "@/util/appError";
-import { uploadImageWithThumbnail, deleteFileByKey } from "@/service/s3.service";
+import { uploadImageWithThumbnail, deleteFileByKey, getExtension } from "@/service/s3.service";
 import { deleteFromDrive } from "@/service/googleDrive.service";
 import { driveSyncQueue } from "@/config/queue";
 import { MAX_USER_UPLOAD_COUNT } from "@/middleware/upload";
 import { UploadErrorCode } from "./upload.error";
 import { toUploadResponse, type UploadResponse } from "./upload.types";
+
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+
+// 업로더 식별 키 — 로그인 사용자는 u{userId}, 비로그인은 세션 ID 해시(세션 ID 원문은 삭제 권한 키라 노출 금지)
+function getUploaderKey(sessionId: string, userId: number | undefined): string {
+  if (userId) return `u${userId}`;
+  return crypto.createHash("sha256").update(sessionId).digest("hex").slice(0, 8);
+}
+
+// Drive 파일명: {uploaderKey}-{YYYYMMDD-HHmmss(KST)}-{순번}.{ext} → 이름순 정렬 시 업로더별로 묶임
+function buildDriveFileName(uploaderKey: string, uploadedAt: Date, index: number, mimetype: string): string {
+  const [date, time] = new Date(uploadedAt.getTime() + KST_OFFSET_MS).toISOString().split("T");
+  const timestamp = `${date.replace(/-/g, "")}-${time.slice(0, 8).replace(/:/g, "")}`;
+  return `${uploaderKey}-${timestamp}-${String(index + 1).padStart(2, "0")}${getExtension(mimetype)}`;
+}
 
 // ─── List ───────────────────────────────────────────────
 
@@ -60,6 +76,8 @@ export async function uploadImages(
   );
 
   // Drive 동기화 잡 큐잉 (uploadId를 jobId로 사용해 삭제 시 취소 가능)
+  const uploaderKey = getUploaderKey(sessionId, userId);
+  const uploadedAt = new Date();
   await Promise.all(
     uploads.map((upload, i) =>
       driveSyncQueue
@@ -69,6 +87,7 @@ export async function uploadImages(
             uploadId: upload.id,
             s3Key: s3Results[i].s3Key,
             originalName: s3Results[i].originalname,
+            fileName: buildDriveFileName(uploaderKey, uploadedAt, i, s3Results[i].mimetype),
             mimeType: s3Results[i].mimetype,
             weddingId,
           },
