@@ -6,6 +6,8 @@ export interface DriveSyncJobData {
   uploadId: number;
   s3Key: string;
   originalName: string;
+  /** Drive 저장 파일명 — 미지정 시(배포 전 큐잉된 잡) `{timestamp}-{originalName}` */
+  fileName?: string;
   mimeType: string;
   weddingId: number;
 }

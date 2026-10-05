@@ -14,12 +14,12 @@ connection.on("error", (err) => {
 export const driveSyncWorker = new Worker<DriveSyncJobData>(
   "drive-sync",
   async (job) => {
-    const { uploadId, s3Key, originalName, mimeType, weddingId } = job.data;
+    const { uploadId, s3Key, originalName, fileName, mimeType, weddingId } = job.data;
 
     const { buffer, contentType } = await downloadFileBuffer(s3Key);
     const folderId = await getOrCreateWeddingFolder(weddingId);
     const { driveFileId } = await uploadToDrive(
-      { buffer, mimetype: mimeType || contentType, originalname: originalName },
+      { buffer, mimetype: mimeType || contentType, name: fileName ?? `${Date.now()}-${originalName}` },
       folderId,
     );
 
