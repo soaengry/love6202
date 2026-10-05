@@ -10,3 +10,8 @@
 - 원인: 두 compose 파일이 같은 디렉터리(docker/)라 프로젝트명이 `docker`로 같고 서비스명도 같음
 - 조치: dev 서버 환경·자동 배포 제거 (2026-10-04)
 - 규칙: 같은 서버에 compose 환경을 추가할 땐 최상위 `name:` 명시. 배포 후에는 `/health`뿐 아니라 DB를 쓰는 엔드포인트(`/api/weddings/latest`)까지 확인
+
+## 업로드 한도를 올릴 때는 요청 타임아웃도 함께 확인한다
+- 사례: 사용자 사진 업로드 한도를 11 → 20장으로 올린 뒤 "업로드에 실패했습니다" 발생
+- 원인: `uploadApi.upload`가 axios 기본 타임아웃(10초)을 그대로 사용. 갤러리 업로드는 이미 300초로 override 되어 있었음
+- 규칙: 파일 개수·용량 한도를 바꾸면 클라이언트 timeout, multer 제한, nginx `client_max_body_size`/`proxy_*_timeout`을 모두 같이 점검
