@@ -13,6 +13,7 @@ export const uploadApi = {
     return api.post<UploadImage[]>(UPLOAD_API.BASE, formData, {
       params: { weddingId },
       headers: { "Content-Type": "multipart/form-data" },
+      timeout: 300_000, // 최대 20장 전송 + 파일당 S3 5회 업로드·sharp 처리 → 최대 5분
       onUploadProgress: (e) => {
         if (onProgress && e.total) onProgress(Math.round((e.loaded / e.total) * 100));
       },
